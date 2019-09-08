@@ -177,94 +177,103 @@ inline int toInt(float x) { return int(clamp(x) * 255 + .5); }
 
 void initScene(Sphere *elements) {
   // RGB Values
-  // image row, column coordinatess
+  // if negative R: sphere reduced to point -> example: punctual light source
+  // image row (top to bottom), column(left to right) coordinates
 
-  // semi-reflecting sphere
-  elements[0].Centre = float3(20.0f, 65.0f, -30.0f);
+  // reflecting sphere
+  elements[0].Centre = float3(20.0f, 65.0f, -10.0f);
   elements[0].R = 25.0f;
   elements[0].diff = float3(1.0f, 1.0f, 1.0f);
   elements[0].spec = 0.85f;
   elements[0].iRefr = 0.0f;
   elements[0].light = -1.0f;
 
-  // white primary light source
-  elements[1].Centre = float3(-25.0f, 25.0f, -30.0f);
-  elements[1].R = 15.0f;
-  elements[1].diff = float3(1.0f, 1.0f, 1.0f);
+  // purple opaque sphere
+  elements[1].Centre = float3(40.0f, -5.0f, -40.0f);
+  elements[1].R = 25.0f;
+  elements[1].diff = float3(1.0f, 0.0f, 0.7f);
   elements[1].spec = 0.0f;
   elements[1].iRefr = 0.0f;
-  elements[1].light = 2000.0f;
+  elements[1].light = -1.0f;
 
-  // transparent ball
-  elements[2].Centre = float3(-29.0f, 45.0f, 5.0f);
-  elements[2].R = 20.0f;
+  // white sphere primary light source
+  elements[2].Centre = float3(-25.0f, 25.0f, -30.0f);
+  elements[2].R = 13.0f;
   elements[2].diff = float3(1.0f, 1.0f, 1.0f);
   elements[2].spec = 0.0f;
-  elements[2].iRefr = 1.2f;
-  elements[2].light = -1.0f;
+  elements[2].iRefr = 0.0f;
+  elements[2].light = 2000.0f;
+
+  // transparent ball
+  elements[3].Centre = float3(-29.0f, 40.0f, 5.0f);
+  elements[3].R = 20.0f;
+  elements[3].diff = float3(1.0f, 1.0f, 1.0f);
+  elements[3].spec = 0.0f;
+  elements[3].iRefr = 1.2f;
+  elements[3].light = -1.0f;
 
   // orange primary light source
-  elements[3].Centre = float3(35.0f, 25.0f, -35.0f);
-  elements[3].R = 10.0f;
-  elements[3].diff = float3(1.0f, 0.3f, 0.0f);
-  elements[3].spec = 0.0f;
-  elements[3].iRefr = 0.0f;
-  elements[3].light = 6000.0f;
-
-  // Wall down
-  elements[4].Centre = float3(0.0f, 2000.0f, 0.0f);
-  elements[4].R = 1900.0f;
-  elements[4].diff = float3(1.0f, 0.05f, 0.05f);
+  elements[4].Centre = float3(-35.0f, -35.0f, -35.0f);
+  elements[4].R = -1.0f;
+  elements[4].diff = float3(1.0f, 0.3f, 0.0f);
   elements[4].spec = 0.0f;
   elements[4].iRefr = 0.0f;
-  elements[4].light = -1.0f;
+  elements[4].light = 20000.0f;
 
-  // Wall up
-  elements[5].Centre = float3(0.0f, -2000.0f, 0.0f);
+  // Wall down
+  elements[5].Centre = float3(0.0f, 2000.0f, 0.0f);
   elements[5].R = 1900.0f;
-  elements[5].diff = float3(0.05f, 1.0f, 0.05f);
+  elements[5].diff = float3(1.0f, 0.05f, 0.05f);
   elements[5].spec = 0.0f;
   elements[5].iRefr = 0.0f;
   elements[5].light = -1.0f;
 
-  // Wall right
-  elements[6].Centre = float3(2000.0f, 0.0f, 0.0f);
+  // Wall up
+  elements[6].Centre = float3(0.0f, -2000.0f, 0.0f);
   elements[6].R = 1900.0f;
-  elements[6].diff = float3(0.5f, 0.5f, 0.5f);
+  elements[6].diff = float3(0.05f, 1.0f, 0.05f);
   elements[6].spec = 0.0f;
   elements[6].iRefr = 0.0f;
   elements[6].light = -1.0f;
 
-  // Wall left
-  elements[7].Centre = float3(-2000.0f, 0.0f, 0.0f);
+  // Wall right
+  elements[7].Centre = float3(2000.0f, 0.0f, 0.0f);
   elements[7].R = 1900.0f;
   elements[7].diff = float3(0.5f, 0.5f, 0.5f);
   elements[7].spec = 0.0f;
   elements[7].iRefr = 0.0f;
   elements[7].light = -1.0f;
 
-  // Wall front
-  elements[8].Centre = float3(0.0f, 0.0f, -2000.0f);
+  // Wall left
+  elements[8].Centre = float3(-2000.0f, 0.0f, 0.0f);
   elements[8].R = 1900.0f;
-  elements[8].diff = float3(0.05f, 0.05f, 1.0f);
+  elements[8].diff = float3(0.5f, 0.5f, 0.5f);
   elements[8].spec = 0.0f;
   elements[8].iRefr = 0.0f;
   elements[8].light = -1.0f;
 
-  // Wall behind
-  elements[9].Centre = float3(0.0f, 0.0f, 2000.0f);
+  // Wall front
+  elements[9].Centre = float3(0.0f, 0.0f, -2000.0f);
   elements[9].R = 1900.0f;
-  elements[9].diff = float3(1.0f, 0.4f, 0.0f);
+  elements[9].diff = float3(0.05f, 0.05f, 1.0f);
   elements[9].spec = 0.0f;
   elements[9].iRefr = 0.0f;
   elements[9].light = -1.0f;
+
+  // Wall behind
+  elements[10].Centre = float3(0.0f, 0.0f, 2000.0f);
+  elements[10].R = 1900.0f;
+  elements[10].diff = float3(1.0f, 0.4f, 0.0f);
+  elements[10].spec = 0.0f;
+  elements[10].iRefr = 0.0f;
+  elements[10].light = -1.0f;
 }
 
 // const int imageW = 240, imageH = 160;
-// const int imageW = 480, imageH = 320;
+const int imageW = 480, imageH = 320;
 // const int imageW = 720, imageH = 480;
 // const int imageW = 1280, imageH = 720;
-const int imageW = 1920, imageH = 1080;
+// const int imageW = 1920, imageH = 1080;
 
 void saveImage() {
   // write image to PPM file, a very simple image file format
@@ -285,7 +294,7 @@ int main(int argc, const char *argv[]) {
   // allocate memory on CPU for the image
   cpu_output = new cl_float3[imageW * imageH];
 
-  int sphere_count = 10;
+  int sphere_count = 11;
   Sphere spheres[sphere_count];
   initScene(spheres);
 

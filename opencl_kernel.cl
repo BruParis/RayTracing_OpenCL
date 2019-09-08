@@ -3,8 +3,9 @@ __constant float EPSILON_SPACE = 0.01f;
 __constant float EPSILON_CALC = 0.001f;
 __constant int BRDF_NUM_RAYS = 10;
 __constant int USE_BRDF = 0;
-__constant int MAX_BOUNCES = 2;
-__constant int ANTI_ALIASING_SAMPLES = 1;
+__constant int MAX_BOUNCES = 5;
+__constant int ANTI_ALIASING_SAMPLES = 10;
+__constant int UINT16_MAX = 2 * 32767;
 
 typedef struct Ray {
   float3 origin;
@@ -78,6 +79,10 @@ Intersection find_intersect(__constant Sphere *spheres, const int sphere_count, 
   for (int i = 0; i < sphere_count; i++) {
 
     Sphere sph = spheres[i];
+
+    if (sph.R < 0.0f)
+      continue;
+
     Intersection aux = intersect(&sph, r);
 
     if (aux.hasIntersection && (aux.t <= result.t)) {
@@ -104,7 +109,7 @@ float3 diffuse_and_shadow(const float3 pInter, const float3 normalInter, int idO
       continue;
 
     float3 lightDir = pInter - L.Centre;
-    float lightDist = dot(lightDir, lightDir) - L.R;
+    float lightDist = dot(lightDir, lightDir) - max(L.R, 0.0f);
     lightDir = normalize(lightDir);
 
     Ray rShadow;
@@ -116,13 +121,13 @@ float3 diffuse_and_shadow(const float3 pInter, const float3 normalInter, int idO
     if (itShadow.objInter < 0)
       continue;
     
-    bool lighting = false;
-    if (itShadow.objInter == i)
-      lighting = true;
-
-    float shadowDist = itShadow.t * itShadow.t;
     const Sphere sphShadow = spheres[itShadow.objInter];
-    bool objShadowRefr = shadowDist < lightDist && sphShadow.iRefr > 1.0f;
+    float shadowDist = itShadow.t * itShadow.t;
+
+    bool objBeforeLight = shadowDist < lightDist; 
+    bool lighting = itShadow.objInter == i
+      || (L.R <= 0.0f && !objBeforeLight);
+    bool objShadowRefr = objBeforeLight && sphShadow.iRefr > 1.0f;
 
     if (lighting || objShadowRefr) {
 
@@ -198,7 +203,7 @@ float3 trace(__constant Sphere *spheres, const int sphere_count, Ray *r) {
     if (spec > 0.0f) {
       r->dir = r->dir - 2.0f * dot(r->dir, normalInter) * normalInter;
       r->origin = pointInter + EPSILON_SPACE * normalInter;
-      mask = spec * mask * diff;
+      mask *= spec * diff;
       continue;
     }
     if (spheres[idObj].iRefr >= 1.0f) /* Transparency, refraction effects */
@@ -226,8 +231,14 @@ float3 trace(__constant Sphere *spheres, const int sphere_count, Ray *r) {
   return colBgr;
 }
 
-static float3 generate_ray(unsigned int i, unsigned int j, float depth,
-                           float width, float height) {
+unsigned int get_random(unsigned int *seed) {
+  *seed = (*seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
+  unsigned int result = *seed >> 16;
+  return result;
+}
+
+static float3 generate_ray(unsigned int i, unsigned int j, unsigned int *rand_seed,
+  float depth, float width, float height) {
 
   /* Gaussian Sampling with Box-Muller method */
   float3 mainDir = (float3)(j - width / 2.0f, i - height / 2.0f, -depth);
@@ -235,10 +246,30 @@ static float3 generate_ray(unsigned int i, unsigned int j, float depth,
   float3 right = cross(normalize(mainDir), up);
 
   /* NEED : implement random generator for kernel */
+  unsigned int random_0 = get_random(rand_seed);
+  unsigned int random_1 = get_random(rand_seed);
 
-  float pixRight = (j - width / 2.0f - 0.5f);
-  float pixUp = (i - height / 2.0f - 0.5f);
-  float3 dir = pixRight * right + pixUp * up + depth * mainDir;
+  float rand_x = 2.0f * ((float) random_0 / UINT16_MAX) - 1.0f;
+  float rand_y = 2.0f * ((float) random_1 / UINT16_MAX) - 1.0f;
+  float s = rand_x * rand_x + rand_y * rand_y;
+
+  while (s == 0 || s >= 1.0f) {
+    int random_0 = get_random(rand_seed);
+    int random_1 = get_random(rand_seed);
+
+    rand_x = 2.0f * ((float) random_0 / UINT16_MAX) - 1.0f;
+    rand_y = 2.0f * ((float) random_1 / UINT16_MAX) - 1.0f;
+    s =  rand_x * rand_x + rand_y * rand_y;
+  }
+
+  float R = sqrt(-1.0f * log(s) / s);
+  float rand_u = R * cos(2.0f * PI * rand_x) * 0.5f;
+  float rand_v = R * sin(2.0f * PI * rand_y) * 0.5f;
+  /*printf("u: %f\n", rand_u);*/
+
+  float pixRight = (j - width / 2.0f + rand_u - 0.5f);
+  float pixUp = (i - height / 2.0f + rand_v - 0.5f);
+  float3 dir = pixRight * right + pixUp * up + mainDir;
   
   dir = normalize(dir);
 
@@ -249,36 +280,35 @@ __kernel void render_kernel(__constant Sphere *spheres, const int width,
                             const int height, const int sphere_count,
                             __global float3 *output) {
   
-  /* the unique global id of the work item for the current pixel */
   unsigned int work_item_id = get_global_id(0);
   unsigned int j = work_item_id % width; /* x-coordinate of the pixel */
   unsigned int i = work_item_id / width; /* y-coordinate of the pixel */
 
   Camera cam;
-  cam.foyer = (float3)(0.0f, 70.0f, 90.0f);
-  cam.fov = 90.0f * PI / 180.0f;
+  cam.foyer = (float3)(0.0f, 50.0f, 90.0f);
+  cam.fov = 60.0f * PI / 180.0f;
 
-  /* define depth from field of view
-    float D = (height / 2) / tan(cam.fov / 2); */
-  float depth = height / (2.0f * tan(cam.fov * 0.5f));
+  float depth = (width * 0.5f) / (tan(cam.fov * 0.5f));
 
   float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
 
+  unsigned int random_seed = work_item_id;
   for (int spl = 0; spl < ANTI_ALIASING_SAMPLES; spl++) {
+
     /* ANTI-ALIASING -> Gaussian sampling around pixel */
-    float3 dir = generate_ray(i, j, depth, width, height);
+    float3 dir = generate_ray(i, j, &random_seed, depth, width, height);
     Ray r;
     r.origin = cam.foyer;
     r.dir = dir;
 
     float3 col = trace(spheres, sphere_count, &r);
 
-    finalcolor += (1 / ANTI_ALIASING_SAMPLES) * col;
+    finalcolor[0] += min(pow(col[0], (1.0f/2.2f)), 1.0f);
+    finalcolor[1] += min(pow(col[1], (1.0f/2.2f)), 1.0f);
+    finalcolor[2] += min(pow(col[2], (1.0f/2.2f)), 1.0f);
   }
 
-  finalcolor[0] = min(pow(finalcolor[0], (1.0f/2.2f)), 1.0f);
-  finalcolor[1] = min(pow(finalcolor[1], (1.0f/2.2f)), 1.0f);
-  finalcolor[2] = min(pow(finalcolor[2], (1.0f/2.2f)), 1.0f);
+  finalcolor = (1.0f / ANTI_ALIASING_SAMPLES) * finalcolor;
 
   output[work_item_id] = finalcolor;
 }
