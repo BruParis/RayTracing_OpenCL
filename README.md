@@ -16,5 +16,6 @@ make
 ./RayTracing
 ```
 The image produced is ```image_raytracing.ppm```.
-![alt text](https://github.com/BruParis/RayTracing_OpenCL/blob/master/image_raytracing.ppm)
+
+![first](image_raytracing.ppm)
 

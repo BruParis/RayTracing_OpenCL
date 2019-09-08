@@ -218,7 +218,7 @@ void initScene(Sphere *elements) {
   elements[4].diff = float3(1.0f, 0.3f, 0.0f);
   elements[4].spec = 0.0f;
   elements[4].iRefr = 0.0f;
-  elements[4].light = 20000.0f;
+  elements[4].light = 40000.0f;
 
   // Wall down
   elements[5].Centre = float3(0.0f, 2000.0f, 0.0f);
@@ -271,8 +271,8 @@ void initScene(Sphere *elements) {
 
 // const int imageW = 240, imageH = 160;
 // const int imageW = 480, imageH = 320;
-// const int imageW = 720, imageH = 480;
-const int imageW = 1280, imageH = 720;
+const int imageW = 720, imageH = 480;
+// const int imageW = 1280, imageH = 720;
 // const int imageW = 1920, imageH = 1080;
 
 void saveImage() {
