@@ -1,12 +1,12 @@
 ## Raytracing with OpenCL
-A quick ray tracey using GPU acceleration as a first use of OpenCL. OpenCL init following tutorials at http://raytracey.blogspot.com/.
+A quick ray tracey using GPU acceleration as a first use of OpenCL. The part of the code regarding OpenCL inititalization was made following tutorials at http://raytracey.blogspot.com/.
 
 
-For now, the ray tracer involves displays only spheres, using effects such as lighting, reflexion, refraction. Other features such as Anti-aliasing and BRDF are present in the code, but not effective. 
+For now, the ray tracer displays only spheres, using effects such as lighting, reflexion, refraction. Other features such as Anti-aliasing and BRDF are present in the code, but not effective. 
 
 ## Dependencies
-OpenCL is obviously needed. Library file directive in the code is 
-```#include </usr/include/CL/cl.hpp>```
+OpenCL is obviously needed. Library file used in the code is 
+```</usr/include/CL/cl.hpp>```
 
 ## Build & Usage
 Simple build using cmake, and then just launch the executable.
