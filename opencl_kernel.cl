@@ -1,8 +1,8 @@
 __constant float PI = 3.14159f;
 __constant float EPSILON_SPACE = 0.01f;
 __constant float EPSILON_CALC = 0.001f;
-__constant int BRDF_NUM_RAYS = 10;
-__constant int USE_BRDF = 0;
+__constant int BRDF_NUM_RAYS = 20;
+__constant int USE_BRDF = 1;
 __constant int MAX_BOUNCES = 5;
 __constant int ANTI_ALIASING_SAMPLES = 10;
 __constant int UINT16_MAX = 2 * 32767;
@@ -33,6 +33,18 @@ typedef struct Sphere {
   float iRefr;
   float light;
 } Sphere;
+
+unsigned int get_random(unsigned int *seed) {
+  *seed = (*seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
+  unsigned int result = *seed >> 16;
+  return result;
+}
+
+float get_uniform(unsigned int *seed) {
+  unsigned int random = get_random(seed);
+  float result = 2.0f * ((float) random / UINT16_MAX) - 1.0f;
+  return result;
+}
 
 Intersection intersect(const Sphere *sph, Ray *r) {
 
@@ -174,7 +186,46 @@ Ray *refraction(const Sphere *sph, Ray *r, const Intersection *it) {
   return r;
 }
 
-float3 trace(__constant Sphere *spheres, const int sphere_count, Ray *r) {
+float3 brdf_ray(float3 normal, unsigned int* rand_seed) {
+  float r1 = get_uniform(rand_seed);
+  float r2 = get_uniform(rand_seed);
+
+  /*new random direction for indirect -diffusive- light, 
+    relative to BRDF distrib, in local coord. system*/
+  float3 localDir = (float3)(cos(2 * PI * r1) * sqrt(1 - r2),
+                             cos(2 * PI * r1) * sqrt(1 - r2), sqrt(r2));
+
+  /* convert into global coordinate, with normal as one of its axes*/
+  float3 randomvec = (float3)(get_uniform(rand_seed),
+                              get_uniform(rand_seed),
+                              get_uniform(rand_seed));
+  float3 tangent1 = normalize(cross(normal, randomvec));
+  float3 tangent2 = cross(tangent1, normal);
+
+  float3 globalDir = localDir[0] * tangent1 + localDir[1] * tangent2
+    + localDir[2] * normal;
+
+  return globalDir;
+}
+
+float3 diffusive_over_brdf(float3 pointInter, float3 normalInter, int idObj,
+                          __constant Sphere* spheres, int sphere_count,
+                          unsigned int* rand_seed) {
+  float3 result = (float3)(0.0f, 0.0f, .0f);
+
+  for (int i = 0; i < BRDF_NUM_RAYS; i++) {
+    float3 brdfDir = brdf_ray(normalInter, rand_seed);
+    /*float cosTheta = dot(brdfDir,Norm);*/
+    float3 light = diffuse_and_shadow(pointInter, brdfDir, idObj, 
+                                      spheres, sphere_count);
+    result += light / BRDF_NUM_RAYS;
+  }
+
+  return result;
+}
+
+float3 trace(__constant Sphere *spheres, const int sphere_count, Ray *r,
+             unsigned int* rand_seed) {
   float3 colBgr = (float3)(0.0f, 0.0f, 0.0f);
   float3 mask = (float3)(1.0f, 1.0f, 1.0f);
 
@@ -213,9 +264,12 @@ float3 trace(__constant Sphere *spheres, const int sphere_count, Ray *r) {
       continue;
     }
 
-    /* Ray brdfRay = USE_BRDF ? Ray(pointInter + EPSILON_SPACE * Norm , BRDF(Norm));
-      float cosTheta = dot(brdfRay.dir,Norm); */
-    float3 lightReceived = diffuse_and_shadow(pointInter, normalInter, idObj, spheres,
+    float3 lightReceived;
+    if (USE_BRDF)
+      lightReceived = diffusive_over_brdf(pointInter, normalInter, idObj, spheres,
+                                          sphere_count, rand_seed);
+    else
+      lightReceived = diffuse_and_shadow(pointInter, normalInter, idObj, spheres,
                                 sphere_count);
 
     /* if weak or no light, no need to follow ray anymore */
@@ -231,12 +285,6 @@ float3 trace(__constant Sphere *spheres, const int sphere_count, Ray *r) {
   return colBgr;
 }
 
-unsigned int get_random(unsigned int *seed) {
-  *seed = (*seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
-  unsigned int result = *seed >> 16;
-  return result;
-}
-
 static float3 generate_ray(unsigned int i, unsigned int j, unsigned int *rand_seed,
   float depth, float width, float height) {
 
@@ -246,11 +294,8 @@ static float3 generate_ray(unsigned int i, unsigned int j, unsigned int *rand_se
   float3 right = cross(normalize(mainDir), up);
 
   /* NEED : implement random generator for kernel */
-  unsigned int random_0 = get_random(rand_seed);
-  unsigned int random_1 = get_random(rand_seed);
-
-  float rand_x = 2.0f * ((float) random_0 / UINT16_MAX) - 1.0f;
-  float rand_y = 2.0f * ((float) random_1 / UINT16_MAX) - 1.0f;
+  float rand_x = get_uniform(rand_seed);
+  float rand_y = get_uniform(rand_seed);
   float s = rand_x * rand_x + rand_y * rand_y;
 
   while (s == 0 || s >= 1.0f) {
@@ -301,7 +346,7 @@ __kernel void render_kernel(__constant Sphere *spheres, const int width,
     r.origin = cam.foyer;
     r.dir = dir;
 
-    float3 col = trace(spheres, sphere_count, &r);
+    float3 col = trace(spheres, sphere_count, &r, &random_seed);
 
     finalcolor[0] += min(pow(col[0], (1.0f/2.2f)), 1.0f);
     finalcolor[1] += min(pow(col[1], (1.0f/2.2f)), 1.0f);
