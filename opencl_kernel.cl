@@ -1,7 +1,7 @@
 __constant float PI = 3.14159f;
 __constant float EPSILON_SPACE = 0.01f;
 __constant float EPSILON_CALC = 0.001f;
-__constant int BRDF_NUM_RAYS = 20;
+__constant int BRDF_NUM_RAYS = 10;
 __constant int USE_BRDF = 1;
 __constant int MAX_BOUNCES = 5;
 __constant int ANTI_ALIASING_SAMPLES = 10;
