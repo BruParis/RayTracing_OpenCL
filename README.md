@@ -15,7 +15,7 @@ cmake .
 make
 ./RayTracing
 ```
-The image produced is ```image_raytracing.ppm```.
+The image produced is ```image_raytracing.png```.
 
 ![first](image_raytracing.png)
 
