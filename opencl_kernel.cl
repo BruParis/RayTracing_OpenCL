@@ -262,7 +262,7 @@ static float3 generate_ray(unsigned int i, unsigned int j, unsigned int *rand_se
     s =  rand_x * rand_x + rand_y * rand_y;
   }
 
-  float R = sqrt(-1.0f * log(s) / s);
+  float R = sqrt(-2.0f * log(s));
   float rand_u = R * cos(2.0f * PI * rand_x) * 0.5f;
   float rand_v = R * sin(2.0f * PI * rand_y) * 0.5f;
   /*printf("u: %f\n", rand_u);*/
