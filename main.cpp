@@ -202,7 +202,7 @@ void initScene(Sphere *elements) {
   elements[2].diff = float3(1.0f, 1.0f, 1.0f);
   elements[2].spec = 0.0f;
   elements[2].iRefr = 0.0f;
-  elements[2].light = 2000.0f;
+  elements[2].light = 6000.0f;
 
   // transparent ball
   elements[3].Centre = float3(-29.0f, 40.0f, 5.0f);
@@ -218,7 +218,7 @@ void initScene(Sphere *elements) {
   elements[4].diff = float3(1.0f, 0.3f, 0.0f);
   elements[4].spec = 0.0f;
   elements[4].iRefr = 0.0f;
-  elements[4].light = 40000.0f;
+  elements[4].light = 60000.0f;
 
   // Wall down
   elements[5].Centre = float3(0.0f, 2000.0f, 0.0f);
