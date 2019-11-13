@@ -3,8 +3,8 @@ __constant float EPSILON_SPACE = 0.01f;
 __constant float EPSILON_CALC = 0.001f;
 __constant int BRDF_NUM_RAYS = 10;
 __constant int USE_BRDF = 1;
-__constant int MAX_BOUNCES = 5;
-__constant int ANTI_ALIASING_SAMPLES = 10;
+__constant int MAX_BOUNCES = 3;
+__constant int ANTI_ALIASING_SAMPLES = 4;
 __constant int UINT16_MAX = 2 * 32767;
 
 typedef struct Ray {
@@ -20,11 +20,6 @@ typedef struct Intersection {
   int objInter;
 } Intersection;
 
-typedef struct Camera {
-  float3 foyer;
-  float fov;
-} Camera;
-
 typedef struct Sphere {
   float3 Centre;
   float R;
@@ -33,6 +28,11 @@ typedef struct Sphere {
   float iRefr;
   float light;
 } Sphere;
+
+typedef struct Camera {
+  float3 foyer;
+  float fov;
+} Camera;
 
 unsigned int get_random(unsigned int *seed) {
   *seed = (*seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
@@ -321,7 +321,7 @@ static float3 generate_ray(unsigned int i, unsigned int j, unsigned int *rand_se
   return dir;
 }
 
-__kernel void render_kernel(__constant Sphere *spheres, const int width,
+__kernel void render_kernel(__constant Sphere *spheres, const float3 foyer, const float fov, const int width,
                             const int height, const int sphere_count,
                             __global float3 *output) {
   
@@ -329,11 +329,7 @@ __kernel void render_kernel(__constant Sphere *spheres, const int width,
   unsigned int j = work_item_id % width; /* x-coordinate of the pixel */
   unsigned int i = work_item_id / width; /* y-coordinate of the pixel */
 
-  Camera cam;
-  cam.foyer = (float3)(0.0f, 50.0f, 90.0f);
-  cam.fov = 60.0f * PI / 180.0f;
-
-  float depth = (width * 0.5f) / (tan(cam.fov * 0.5f));
+  float depth = (width * 0.5f) / (tan(fov * 0.5f));
 
   float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
 
@@ -343,7 +339,7 @@ __kernel void render_kernel(__constant Sphere *spheres, const int width,
     /* ANTI-ALIASING -> Gaussian sampling around pixel */
     float3 dir = generate_ray(i, j, &random_seed, depth, width, height);
     Ray r;
-    r.origin = cam.foyer;
+    r.origin = foyer;
     r.dir = dir;
 
     float3 col = trace(spheres, sphere_count, &r, &random_seed);

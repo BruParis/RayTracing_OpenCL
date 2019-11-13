@@ -8,6 +8,16 @@
 #define ANTI_ALIASING_SAMPLES 1
 #define PI 3.14159
 
+cl_float3 operator+ (const cl_float3& lhs, const cl_float3& rhs)
+{
+  cl_float3 result;
+  for (uint i = 0; i < 3; ++i)
+    {
+      result.s[i] = lhs.s[i] + rhs.s[i];
+    }
+  return result;
+}
+
 typedef struct Sphere {
   cl_float3 Centre;
   cl_float R;
@@ -16,6 +26,11 @@ typedef struct Sphere {
   cl_float iRefr;
   cl_float light;
 } Sphere;
+
+typedef struct Camera {
+  cl_float3 foyer;
+  float fov;
+} Camera;
 
 cl_float4 *cpu_output;
 cl::CommandQueue queue;
@@ -173,7 +188,10 @@ inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; }
 // correction
 inline int toInt(float x) { return int(clamp(x) * 255 + .5); }
 
-#define float3(x, y, z) {{x, y, z}}  // macro to replace ugly initializer braces
+// #define float3(x, y, z)                                                        \
+//   {                                                                            \
+//     { x, y, z }                                                                \
+//   } // macro to replace ugly initializer braces
 
 void initScene(Sphere *elements) {
   // RGB Values
@@ -181,89 +199,89 @@ void initScene(Sphere *elements) {
   // image row (top to bottom), column(left to right) coordinates
 
   // reflecting sphere
-  elements[0].Centre = float3(20.0f, 65.0f, -10.0f);
+  elements[0].Centre = {20.0f, 65.0f, -10.0f};
   elements[0].R = 25.0f;
-  elements[0].diff = float3(1.0f, 1.0f, 1.0f);
+  elements[0].diff = {1.0f, 1.0f, 1.0f};
   elements[0].spec = 0.85f;
   elements[0].iRefr = 0.0f;
   elements[0].light = -1.0f;
 
   // purple opaque sphere
-  elements[1].Centre = float3(40.0f, -5.0f, -40.0f);
+  elements[1].Centre = {40.0f, -5.0f, -40.0f};
   elements[1].R = 25.0f;
-  elements[1].diff = float3(1.0f, 0.0f, 0.7f);
+  elements[1].diff = {1.0f, 0.0f, 0.7f};
   elements[1].spec = 0.0f;
   elements[1].iRefr = 0.0f;
   elements[1].light = -1.0f;
 
   // white sphere primary light source
-  elements[2].Centre = float3(-25.0f, 25.0f, -30.0f);
+  elements[2].Centre = {-25.0f, 25.0f, -30.0f};
   elements[2].R = 13.0f;
-  elements[2].diff = float3(1.0f, 1.0f, 1.0f);
+  elements[2].diff = {1.0f, 1.0f, 1.0f};
   elements[2].spec = 0.0f;
   elements[2].iRefr = 0.0f;
   elements[2].light = 6000.0f;
 
   // transparent ball
-  elements[3].Centre = float3(-29.0f, 40.0f, 5.0f);
+  elements[3].Centre = {-29.0f, 40.0f, 5.0f};
   elements[3].R = 20.0f;
-  elements[3].diff = float3(1.0f, 1.0f, 1.0f);
+  elements[3].diff = {1.0f, 1.0f, 1.0f};
   elements[3].spec = 0.0f;
   elements[3].iRefr = 1.2f;
   elements[3].light = -1.0f;
 
   // orange primary light source
-  elements[4].Centre = float3(-35.0f, -35.0f, -35.0f);
+  elements[4].Centre = {-35.0f, -35.0f, -35.0f};
   elements[4].R = -1.0f;
-  elements[4].diff = float3(1.0f, 0.3f, 0.0f);
+  elements[4].diff = {1.0f, 0.3f, 0.0f};
   elements[4].spec = 0.0f;
   elements[4].iRefr = 0.0f;
   elements[4].light = 60000.0f;
 
   // Wall down
-  elements[5].Centre = float3(0.0f, 2000.0f, 0.0f);
+  elements[5].Centre = {0.0f, 2000.0f, 0.0f};
   elements[5].R = 1900.0f;
-  elements[5].diff = float3(1.0f, 0.05f, 0.05f);
+  elements[5].diff = {1.0f, 0.05f, 0.05f};
   elements[5].spec = 0.0f;
   elements[5].iRefr = 0.0f;
   elements[5].light = -1.0f;
 
   // Wall up
-  elements[6].Centre = float3(0.0f, -2000.0f, 0.0f);
+  elements[6].Centre = {0.0f, -2000.0f, 0.0f};
   elements[6].R = 1900.0f;
-  elements[6].diff = float3(0.05f, 1.0f, 0.05f);
+  elements[6].diff = {0.05f, 1.0f, 0.05f};
   elements[6].spec = 0.0f;
   elements[6].iRefr = 0.0f;
   elements[6].light = -1.0f;
 
   // Wall right
-  elements[7].Centre = float3(2000.0f, 0.0f, 0.0f);
+  elements[7].Centre = {2000.0f, 0.0f, 0.0f};
   elements[7].R = 1900.0f;
-  elements[7].diff = float3(0.5f, 0.5f, 0.5f);
+  elements[7].diff = {0.5f, 0.5f, 0.5f};
   elements[7].spec = 0.0f;
   elements[7].iRefr = 0.0f;
   elements[7].light = -1.0f;
 
   // Wall left
-  elements[8].Centre = float3(-2000.0f, 0.0f, 0.0f);
+  elements[8].Centre = {-2000.0f, 0.0f, 0.0f};
   elements[8].R = 1900.0f;
-  elements[8].diff = float3(0.5f, 0.5f, 0.5f);
+  elements[8].diff = {0.5f, 0.5f, 0.5f};
   elements[8].spec = 0.0f;
   elements[8].iRefr = 0.0f;
   elements[8].light = -1.0f;
 
   // Wall front
-  elements[9].Centre = float3(0.0f, 0.0f, -2000.0f);
+  elements[9].Centre = {0.0f, 0.0f, -2000.0f};
   elements[9].R = 1900.0f;
-  elements[9].diff = float3(0.05f, 0.05f, 1.0f);
+  elements[9].diff = {0.05f, 0.05f, 1.0f};
   elements[9].spec = 0.0f;
   elements[9].iRefr = 0.0f;
   elements[9].light = -1.0f;
 
   // Wall behind
-  elements[10].Centre = float3(0.0f, 0.0f, 2000.0f);
+  elements[10].Centre = {0.0f, 0.0f, 2000.0f};
   elements[10].R = 1900.0f;
-  elements[10].diff = float3(1.0f, 0.4f, 0.0f);
+  elements[10].diff = {1.0f, 0.4f, 0.0f};
   elements[10].spec = 0.0f;
   elements[10].iRefr = 0.0f;
   elements[10].light = -1.0f;
@@ -271,13 +289,15 @@ void initScene(Sphere *elements) {
 
 // const int imageW = 240, imageH = 160;
 // const int imageW = 480, imageH = 320;
-// const int imageW = 720, imageH = 480;
-const int imageW = 1280, imageH = 720;
+const int imageW = 720, imageH = 480;
+// const int imageW = 1280, imageH = 720;
 // const int imageW = 1920, imageH = 1080;
 
-void saveImage() {
+void saveImage(int imgIdx) {
+  std::string fileName = "image_raytracing_" + std::to_string(imgIdx) + ".ppm";
+
   // write image to PPM file, a very simple image file format
-  FILE *f = fopen("image_raytracing.ppm", "w");
+  FILE *f = fopen(fileName.c_str(), "w");
   fprintf(f, "P3\n%d %d\n%d\n", imageW, imageH, 255);
 
   // loop over all pixels, write RGB values
@@ -295,23 +315,35 @@ int main(int argc, const char *argv[]) {
   cpu_output = new cl_float3[imageW * imageH];
 
   int sphere_count = 11;
+  std::cout << "init OpenCl" << std::endl;
   Sphere spheres[sphere_count];
   initScene(spheres);
+
+  std::cout << "init spheres done" << std::endl;
+  Camera* cam = new Camera();
+  std::cout << "start init cam" << std::endl;
+  cam->foyer = {0.0f, 50.0f, 90.0f};
+  std::cout << "start init cam" << std::endl;
+  cam->fov = 60.0f * PI / 180.0f;
 
   // Create buffers on the OpenCL device for the image and the spheres
   cl_output = cl::Buffer(context, CL_MEM_WRITE_ONLY,
                          imageW * imageH * sizeof(cl_float3));
   cl_spheres =
       cl::Buffer(context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
-  queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0, sphere_count * sizeof(Sphere),
-                           spheres);
+  queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0,
+                           sphere_count * sizeof(Sphere), spheres);
+
+  std::cout << "OpenCl arg" << std::endl;
 
   // specify OpenCL kernel arguments
   kernel.setArg(0, cl_spheres);
-  kernel.setArg(1, imageW);
-  kernel.setArg(2, imageH);
-  kernel.setArg(3, sphere_count);
-  kernel.setArg(4, cl_output);
+  kernel.setArg(1, cam->foyer);
+  kernel.setArg(2, cam->fov);
+  kernel.setArg(3, imageW);
+  kernel.setArg(4, imageH);
+  kernel.setArg(5, sphere_count);
+  kernel.setArg(6, cl_output);
 
   // the total amount of work items equals the number of pixels
   std::size_t global_work_size = imageW * imageH;
@@ -327,20 +359,26 @@ int main(int argc, const char *argv[]) {
 
   std::cout << "Rendering started..." << std::endl;
 
-  // launch the kernel
-  queue.enqueueNDRangeKernel(kernel, NULL, global_work_size, local_work_size);
-  queue.finish();
+  cl_float3 vec_displ = {0.0f, 0.0f, -5.0f};
+  for (int i = 0; i < 10; i++) {
+    // launch the kernel
+    queue.enqueueNDRangeKernel(kernel, NULL, global_work_size, local_work_size);
+    queue.finish();
 
-  std::cout << "Rendering done! \nCopying output from device to host"
-            << std::endl;
+    std::cout << "Rendering done! \nCopying output from device to host"
+              << std::endl;
 
-  // read and copy OpenCL output to CPU
-  queue.enqueueReadBuffer(cl_output, CL_TRUE, 0,
-                          imageW * imageH * sizeof(cl_float3), cpu_output);
+    // read and copy OpenCL output to CPU
+    queue.enqueueReadBuffer(cl_output, CL_TRUE, 0,
+                            imageW * imageH * sizeof(cl_float3), cpu_output);
 
-  // save image
-  saveImage();
-  std::cout << "Saved image to 'image_raytracing.ppm'" << std::endl;
+    // save image
+    saveImage(i);
+    std::cout << "Saved image" << std::endl;
+
+    cam->foyer = cam->foyer + vec_displ;
+    kernel.setArg(1, cam->foyer);
+  }
 
   // release memory
   cleanUp();
