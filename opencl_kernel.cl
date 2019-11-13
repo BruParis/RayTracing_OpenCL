@@ -321,9 +321,8 @@ static float3 generate_ray(unsigned int i, unsigned int j, unsigned int *rand_se
   return dir;
 }
 
-__kernel void render_kernel(__constant Sphere *spheres, const float3 foyer, const float fov, const int width,
-                            const int height, const int sphere_count,
-                            __global float3 *output) {
+__kernel void render_kernel(__constant Sphere *spheres, const int sphere_count, const float3 foyer, const float fov, const int width,
+                            const int height, __global float3 *output) {
   
   unsigned int work_item_id = get_global_id(0);
   unsigned int j = work_item_id % width; /* x-coordinate of the pixel */

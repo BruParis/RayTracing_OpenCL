@@ -2,183 +2,17 @@
 #include <iostream>
 #include <vector>
 
+#include "CLOperator/CLOperator.h"
+
 #define CL_HPP_TARGET_OPENCL_VERSION 200
-#include </usr/include/CL/cl.hpp>
+#include <CL/cl.hpp>
 
 #define ANTI_ALIASING_SAMPLES 1
 #define PI 3.14159
 
-cl_float3 operator+ (const cl_float3& lhs, const cl_float3& rhs)
-{
-  cl_float3 result;
-  for (uint i = 0; i < 3; ++i)
-    {
-      result.s[i] = lhs.s[i] + rhs.s[i];
-    }
-  return result;
-}
-
-typedef struct Sphere {
-  cl_float3 Centre;
-  cl_float R;
-  cl_float3 diff;
-  cl_float spec;
-  cl_float iRefr;
-  cl_float light;
-} Sphere;
-
-typedef struct Camera {
-  cl_float3 foyer;
-  float fov;
-} Camera;
+using namespace cl;
 
 cl_float4 *cpu_output;
-cl::CommandQueue queue;
-cl::Device device;
-cl::Kernel kernel;
-cl::Context context;
-cl::Program program;
-cl::Buffer cl_output;
-cl::Buffer cl_spheres;
-
-void pickPlatform(cl::Platform &platform,
-                  const std::vector<cl::Platform> &platforms) {
-
-  if (platforms.size() == 1)
-    platform = platforms[0];
-  else {
-    int input = 0;
-    std::cout << "\nChoose an OpenCL platform: ";
-    std::cin >> input;
-
-    // handle incorrect user input
-    while (input < 1 || input > platforms.size()) {
-
-      // clear errors/bad flags on cin
-      // ignores exact number of chars in cin buffer
-      std::cin.clear();
-      std::cin.ignore(std::cin.rdbuf()->in_avail(), '\n');
-      std::cout << "No such option. Choose an OpenCL platform : ";
-      std::cin >> input;
-    }
-    platform = platforms[input - 1];
-  }
-}
-
-void pickDevice(cl::Device &device, const std::vector<cl::Device> &devices) {
-
-  if (devices.size() == 1)
-    device = devices[0];
-  else {
-    int input = 0;
-    std::cout << "\nChoose an OpenCL device: ";
-    std::cin >> input;
-
-    // handle incorrect user input
-    while (input < 1 || input > devices.size()) {
-      // clear errors/bad flags on cin
-      // ignores exact number of chars in cin buffer
-      std::cin.clear();
-      std::cin.ignore(std::cin.rdbuf()->in_avail(), '\n');
-      std::cout << "No such option. Choose an OpenCL device : ";
-      std::cin >> input;
-    }
-    device = devices[input - 1];
-  }
-}
-
-void printErrorLog(const cl::Program &program, const cl::Device &device) {
-
-  // Get the error log and print to console
-  std::string buildlog = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
-  std::cerr << "Build log:" << std::endl << buildlog << std::endl;
-
-  // Print the error log to a file
-  FILE *log = fopen("errorlog.txt", "w");
-  fprintf(log, "%s\n", buildlog);
-  std::cout << "Error log saved in 'errorlog.txt'" << std::endl;
-  system("PAUSE");
-  exit(1);
-}
-
-void initOpenCL() {
-  // Get all available OpenCL platforms (e.g. AMD OpenCL, Nvidia CUDA,
-  // IntelOpenCL)
-  std::vector<cl::Platform> platforms;
-  cl::Platform::get(&platforms);
-
-  std::cout << "Available OpenCL platforms : " << std::endl << std::endl;
-  for (int i = 0; i < platforms.size(); i++)
-    std::cout << "\t" << i + 1 << ": "
-              << platforms[i].getInfo<CL_PLATFORM_NAME>() << std::endl;
-
-  // Pick one platform
-  cl::Platform platform;
-  pickPlatform(platform, platforms);
-  std::cout << "\nUsing OpenCL platform: \t"
-            << platform.getInfo<CL_PLATFORM_NAME>() << std::endl;
-
-  // Get available OpenCL devices on platform
-  std::vector<cl::Device> devices;
-  platform.getDevices(CL_DEVICE_TYPE_ALL, &devices);
-
-  std::cout << "Available OpenCL devices on this platform: " << std::endl
-            << std::endl;
-  for (int i = 0; i < devices.size(); i++) {
-    std::cout << "\t" << i + 1 << ": " << devices[i].getInfo<CL_DEVICE_NAME>()
-              << std::endl;
-    std::cout << "\t\tMax compute units: "
-              << devices[i].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << std::endl;
-    std::cout << "\t\tMax work group size: "
-              << devices[i].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>()
-              << std::endl
-              << std::endl;
-  }
-
-  // Pick one device
-  pickDevice(device, devices);
-  std::cout << "\nUsing OpenCL device: \t" << device.getInfo<CL_DEVICE_NAME>()
-            << std::endl;
-  std::cout << "\t\t\tMax compute units : "
-            << device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << std::endl;
-  std::cout << "\t\t\tMax work group size: "
-            << device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>() << std::endl;
-
-  // Create an OpenCL context and command queue on that device.
-  context = cl::Context(device);
-  queue = cl::CommandQueue(context, device);
-
-  // Convert the OpenCL source code to a string
-  std::string source;
-  std::ifstream file("opencl_kernel.cl");
-  if (!file) {
-    std::cout << "\nNo OpenCL file found!" << std::endl
-              << "Exiting..." << std::endl;
-    system("PAUSE");
-    exit(1);
-  }
-  while (!file.eof()) {
-    char line[256];
-    file.getline(line, 255);
-    source += line;
-  }
-
-  const char *kernel_source = source.c_str();
-
-  // Create an OpenCL program by performing runtime source compilation for the
-  // chosen device
-  program = cl::Program(context, kernel_source);
-  cl_int result = program.build({device});
-
-  if (result)
-    std::cout << "Error during compilation OpenCL code !!!\n(" << result << ") "
-              << std::endl;
-  if (result == CL_BUILD_PROGRAM_FAILURE)
-    printErrorLog(program, device);
-
-  // Create a kernel (entry point in the OpenCL source program)
-  kernel = cl::Kernel(program, "render_kernel");
-}
 
 void cleanUp() { delete cpu_output; }
 
@@ -188,10 +22,13 @@ inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; }
 // correction
 inline int toInt(float x) { return int(clamp(x) * 255 + .5); }
 
-// #define float3(x, y, z)                                                        \
-//   {                                                                            \
-//     { x, y, z }                                                                \
-//   } // macro to replace ugly initializer braces
+cl_float3 operator+(const cl_float3 &lhs, const cl_float3 &rhs) {
+  cl_float3 result;
+  for (uint i = 0; i < 3; ++i) {
+    result.s[i] = lhs.s[i] + rhs.s[i];
+  }
+  return result;
+};
 
 void initScene(Sphere *elements) {
   // RGB Values
@@ -309,80 +146,41 @@ void saveImage(int imgIdx) {
 
 int main(int argc, const char *argv[]) {
 
-  initOpenCL();
+  std::string kernel_path = "opencl_kernel.cl";
+  CLOperator *clOperator = new CLOperator(kernel_path);
 
   // allocate memory on CPU for the image
+  clOperator->SetBufferOutput(imageW, imageH);
   cpu_output = new cl_float3[imageW * imageH];
 
   int sphere_count = 11;
-  std::cout << "init OpenCl" << std::endl;
   Sphere spheres[sphere_count];
   initScene(spheres);
+  clOperator->SetScene(spheres, sphere_count);
 
-  std::cout << "init spheres done" << std::endl;
-  Camera* cam = new Camera();
-  std::cout << "start init cam" << std::endl;
+  Camera *cam = new Camera();
   cam->foyer = {0.0f, 50.0f, 90.0f};
-  std::cout << "start init cam" << std::endl;
   cam->fov = 60.0f * PI / 180.0f;
-
-  // Create buffers on the OpenCL device for the image and the spheres
-  cl_output = cl::Buffer(context, CL_MEM_WRITE_ONLY,
-                         imageW * imageH * sizeof(cl_float3));
-  cl_spheres =
-      cl::Buffer(context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
-  queue.enqueueWriteBuffer(cl_spheres, CL_TRUE, 0,
-                           sphere_count * sizeof(Sphere), spheres);
+  clOperator->SetCamera(cam);
 
   std::cout << "OpenCl arg" << std::endl;
-
-  // specify OpenCL kernel arguments
-  kernel.setArg(0, cl_spheres);
-  kernel.setArg(1, cam->foyer);
-  kernel.setArg(2, cam->fov);
-  kernel.setArg(3, imageW);
-  kernel.setArg(4, imageH);
-  kernel.setArg(5, sphere_count);
-  kernel.setArg(6, cl_output);
-
-  // the total amount of work items equals the number of pixels
-  std::size_t global_work_size = imageW * imageH;
-  std::size_t local_work_size =
-      kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
-
-  std::cout << "Kernel work group size: " << local_work_size << std::endl;
-
-  // Ensure the global work size is a multiple of local work size
-  if (global_work_size % local_work_size != 0)
-    global_work_size =
-        (global_work_size / local_work_size + 1) * local_work_size;
-
-  std::cout << "Rendering started..." << std::endl;
 
   cl_float3 vec_displ = {0.0f, 0.0f, -5.0f};
   for (int i = 0; i < 10; i++) {
     // launch the kernel
-    queue.enqueueNDRangeKernel(kernel, NULL, global_work_size, local_work_size);
-    queue.finish();
-
-    std::cout << "Rendering done! \nCopying output from device to host"
-              << std::endl;
-
-    // read and copy OpenCL output to CPU
-    queue.enqueueReadBuffer(cl_output, CL_TRUE, 0,
-                            imageW * imageH * sizeof(cl_float3), cpu_output);
+    clOperator->ExecuteKernel();
+    clOperator->ReadOutput(cpu_output);
 
     // save image
     saveImage(i);
     std::cout << "Saved image" << std::endl;
 
     cam->foyer = cam->foyer + vec_displ;
-    kernel.setArg(1, cam->foyer);
+    clOperator->SetCamera(cam);
   }
 
   // release memory
   cleanUp();
-
   system("PAUSE");
 
   return 0;
