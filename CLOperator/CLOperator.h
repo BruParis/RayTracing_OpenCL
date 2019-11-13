@@ -21,9 +21,9 @@ public:
   void SetScene(const Sphere* spheres, int sphere_count);
   void SetCamera(const Camera* cam);
   void SetBufferOutput(int imageW, int imageH);
-  void SetKernelParam(KernelParam paramIdx, const void* data);
+  void SetKernelParam(KernelParam paramIdx, const void* data, size_t size);
   void WriteBuffer(const cl::Buffer& buffer, const void* data, size_t size);
-  void ExecuteKernel();
+  void LaunchKernel();
   void ReadOutput(void* data);
 
 private:

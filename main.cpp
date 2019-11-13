@@ -163,12 +163,10 @@ int main(int argc, const char *argv[]) {
   cam->fov = 60.0f * PI / 180.0f;
   clOperator->SetCamera(cam);
 
-  std::cout << "OpenCl arg" << std::endl;
-
   cl_float3 vec_displ = {0.0f, 0.0f, -5.0f};
   for (int i = 0; i < 10; i++) {
     // launch the kernel
-    clOperator->ExecuteKernel();
+    clOperator->LaunchKernel();
     clOperator->ReadOutput(cpu_output);
 
     // save image

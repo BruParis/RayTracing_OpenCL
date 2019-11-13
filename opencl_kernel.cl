@@ -310,7 +310,6 @@ static float3 generate_ray(unsigned int i, unsigned int j, unsigned int *rand_se
   float R = sqrt(-2.0f * log(s));
   float rand_u = R * cos(2.0f * PI * rand_x) * 0.5f;
   float rand_v = R * sin(2.0f * PI * rand_y) * 0.5f;
-  /*printf("u: %f\n", rand_u);*/
 
   float pixRight = (j - width / 2.0f + rand_u - 0.5f);
   float pixUp = (i - height / 2.0f + rand_v - 0.5f);
@@ -321,9 +320,10 @@ static float3 generate_ray(unsigned int i, unsigned int j, unsigned int *rand_se
   return dir;
 }
 
-__kernel void render_kernel(__constant Sphere *spheres, const int sphere_count, const float3 foyer, const float fov, const int width,
+__kernel void render_kernel(__constant Sphere *spheres, const int sphere_count, 
+                            const float3 foyer, const float fov, const int width,
                             const int height, __global float3 *output) {
-  
+
   unsigned int work_item_id = get_global_id(0);
   unsigned int j = work_item_id % width; /* x-coordinate of the pixel */
   unsigned int i = work_item_id / width; /* y-coordinate of the pixel */

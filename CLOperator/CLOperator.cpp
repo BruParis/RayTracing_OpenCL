@@ -150,13 +150,14 @@ void CLOperator::SetBufferOutput(int imageW, int imageH) {
   _imageH = imageH;
   _cl_output = cl::Buffer(_context, CL_MEM_WRITE_ONLY,
                           _imageW * _imageH * sizeof(cl_float3));
-  SetKernelParam(KernelParam::BUFFER_OUTPUT, &_cl_output);
-  SetKernelParam(KernelParam::IMAGE_WIDTH, &_imageW);
-  SetKernelParam(KernelParam::IMAGE_HEIGHT, &_imageH);
+  SetKernelParam(KernelParam::BUFFER_OUTPUT, &_cl_output, sizeof(cl::Buffer));
+  SetKernelParam(KernelParam::IMAGE_WIDTH, &_imageW, sizeof(int));
+  SetKernelParam(KernelParam::IMAGE_HEIGHT, &_imageH, sizeof(int));
 
   // the total amount of work items equals the number of pixels
   _global_work_size = _imageW * _imageH;
-  _local_work_size = _kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(_device);
+  _local_work_size =
+      _kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(_device);
 
   std::cout << "Kernel work group size: " << _local_work_size << std::endl;
 
@@ -172,13 +173,13 @@ void CLOperator::SetScene(const Sphere *spheres, int sphere_count) {
 
   // Create buffers on the OpenCL device for the image and the spheres
   WriteBuffer(cl_spheres, spheres, sphere_count * sizeof(Sphere));
-  SetKernelParam(KernelParam::BUFFER_SPHERES, &cl_spheres);
-  SetKernelParam(KernelParam::SPHERE_COUNT, &sphere_count);
+  SetKernelParam(KernelParam::BUFFER_SPHERES, &cl_spheres, sizeof(cl::Buffer));
+  SetKernelParam(KernelParam::SPHERE_COUNT, &sphere_count, sizeof(int));
 }
 
 void CLOperator::SetCamera(const Camera *cam) {
-  SetKernelParam(KernelParam::CAM_FOYER, &cam->foyer);
-  SetKernelParam(KernelParam::CAM_FOV, &cam->fov);
+  SetKernelParam(KernelParam::CAM_FOYER, &(cam->foyer), sizeof(cl_float3));
+  SetKernelParam(KernelParam::CAM_FOV, &(cam->fov), sizeof(float));
 }
 
 void CLOperator::WriteBuffer(const cl::Buffer &buffer, const void *data,
@@ -186,11 +187,11 @@ void CLOperator::WriteBuffer(const cl::Buffer &buffer, const void *data,
   _queue.enqueueWriteBuffer(buffer, CL_TRUE, 0, size, data);
 }
 
-void CLOperator::SetKernelParam(KernelParam paramIdx, const void *data) {
-  _kernel.setArg(static_cast<unsigned int>(paramIdx), data);
+void CLOperator::SetKernelParam(KernelParam paramIdx, const void *data, size_t size) {
+  _kernel.setArg(static_cast<unsigned int>(paramIdx), size, data);
 }
 
-void CLOperator::ExecuteKernel() {
+void CLOperator::LaunchKernel() {
   std::cout << "Rendering started..." << std::endl;
 
   _queue.enqueueNDRangeKernel(_kernel, NULL, _global_work_size,
