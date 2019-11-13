@@ -30,100 +30,6 @@ cl_float3 operator+(const cl_float3 &lhs, const cl_float3 &rhs) {
   return result;
 };
 
-void initScene(Sphere *elements) {
-  // RGB Values
-  // if negative R: sphere reduced to point -> example: punctual light source
-  // image row (top to bottom), column(left to right) coordinates
-
-  // reflecting sphere
-  elements[0].Centre = {20.0f, 65.0f, -10.0f};
-  elements[0].R = 25.0f;
-  elements[0].diff = {1.0f, 1.0f, 1.0f};
-  elements[0].spec = 0.85f;
-  elements[0].iRefr = 0.0f;
-  elements[0].light = -1.0f;
-
-  // purple opaque sphere
-  elements[1].Centre = {40.0f, -5.0f, -40.0f};
-  elements[1].R = 25.0f;
-  elements[1].diff = {1.0f, 0.0f, 0.7f};
-  elements[1].spec = 0.0f;
-  elements[1].iRefr = 0.0f;
-  elements[1].light = -1.0f;
-
-  // white sphere primary light source
-  elements[2].Centre = {-25.0f, 25.0f, -30.0f};
-  elements[2].R = 13.0f;
-  elements[2].diff = {1.0f, 1.0f, 1.0f};
-  elements[2].spec = 0.0f;
-  elements[2].iRefr = 0.0f;
-  elements[2].light = 6000.0f;
-
-  // transparent ball
-  elements[3].Centre = {-29.0f, 40.0f, 5.0f};
-  elements[3].R = 20.0f;
-  elements[3].diff = {1.0f, 1.0f, 1.0f};
-  elements[3].spec = 0.0f;
-  elements[3].iRefr = 1.2f;
-  elements[3].light = -1.0f;
-
-  // orange primary light source
-  elements[4].Centre = {-35.0f, -35.0f, -35.0f};
-  elements[4].R = -1.0f;
-  elements[4].diff = {1.0f, 0.3f, 0.0f};
-  elements[4].spec = 0.0f;
-  elements[4].iRefr = 0.0f;
-  elements[4].light = 60000.0f;
-
-  // Wall down
-  elements[5].Centre = {0.0f, 2000.0f, 0.0f};
-  elements[5].R = 1900.0f;
-  elements[5].diff = {1.0f, 0.05f, 0.05f};
-  elements[5].spec = 0.0f;
-  elements[5].iRefr = 0.0f;
-  elements[5].light = -1.0f;
-
-  // Wall up
-  elements[6].Centre = {0.0f, -2000.0f, 0.0f};
-  elements[6].R = 1900.0f;
-  elements[6].diff = {0.05f, 1.0f, 0.05f};
-  elements[6].spec = 0.0f;
-  elements[6].iRefr = 0.0f;
-  elements[6].light = -1.0f;
-
-  // Wall right
-  elements[7].Centre = {2000.0f, 0.0f, 0.0f};
-  elements[7].R = 1900.0f;
-  elements[7].diff = {0.5f, 0.5f, 0.5f};
-  elements[7].spec = 0.0f;
-  elements[7].iRefr = 0.0f;
-  elements[7].light = -1.0f;
-
-  // Wall left
-  elements[8].Centre = {-2000.0f, 0.0f, 0.0f};
-  elements[8].R = 1900.0f;
-  elements[8].diff = {0.5f, 0.5f, 0.5f};
-  elements[8].spec = 0.0f;
-  elements[8].iRefr = 0.0f;
-  elements[8].light = -1.0f;
-
-  // Wall front
-  elements[9].Centre = {0.0f, 0.0f, -2000.0f};
-  elements[9].R = 1900.0f;
-  elements[9].diff = {0.05f, 0.05f, 1.0f};
-  elements[9].spec = 0.0f;
-  elements[9].iRefr = 0.0f;
-  elements[9].light = -1.0f;
-
-  // Wall behind
-  elements[10].Centre = {0.0f, 0.0f, 2000.0f};
-  elements[10].R = 1900.0f;
-  elements[10].diff = {1.0f, 0.4f, 0.0f};
-  elements[10].spec = 0.0f;
-  elements[10].iRefr = 0.0f;
-  elements[10].light = -1.0f;
-}
-
 // const int imageW = 240, imageH = 160;
 // const int imageW = 480, imageH = 320;
 const int imageW = 720, imageH = 480;
@@ -153,10 +59,8 @@ int main(int argc, const char *argv[]) {
   clOperator->SetBufferOutput(imageW, imageH);
   cpu_output = new cl_float3[imageW * imageH];
 
-  int sphere_count = 11;
-  Sphere spheres[sphere_count];
-  initScene(spheres);
-  clOperator->SetScene(spheres, sphere_count);
+  const Scene* scene = new Scene();
+  clOperator->SetScene(scene);
 
   Camera *cam = new Camera();
   cam->foyer = {0.0f, 50.0f, 90.0f};
@@ -170,7 +74,7 @@ int main(int argc, const char *argv[]) {
     clOperator->ReadOutput(cpu_output);
 
     // save image
-    saveImage(i);
+    //saveImage(i);
     std::cout << "Saved image" << std::endl;
 
     cam->foyer = cam->foyer + vec_displ;

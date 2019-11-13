@@ -2,6 +2,7 @@
 #define CL_OPERATOR_HPP
 
 #include "../Scene/common_struct.h"
+#include "../Scene/Scene.h"
 #include <CL/cl.hpp>
 
 enum class KernelParam : unsigned int {
@@ -18,7 +19,7 @@ class CLOperator {
 public:
   CLOperator(std::string kernel_path);
 
-  void SetScene(const Sphere* spheres, int sphere_count);
+  void SetScene(const Scene *scene);
   void SetCamera(const Camera* cam);
   void SetBufferOutput(int imageW, int imageH);
   void SetKernelParam(KernelParam paramIdx, const void* data, size_t size);

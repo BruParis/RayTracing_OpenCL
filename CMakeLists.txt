@@ -15,7 +15,7 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${ROOT_DIR}")
 message( "output: " ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 find_package( OpenCL REQUIRED )
-file(GLOB RayTracing_SOURCES *.cpp CLOperator/*.cpp)
+file(GLOB RayTracing_SOURCES *.cpp CLOperator/*.cpp Scene/*.cpp)
 
 add_executable( RayTracing ${RayTracing_SOURCES} )
 target_link_libraries( RayTracing ${OpenCL_LIBRARIES} )

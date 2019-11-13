@@ -167,7 +167,14 @@ void CLOperator::SetBufferOutput(int imageW, int imageH) {
         (_global_work_size / _local_work_size + 1) * _local_work_size;
 }
 
-void CLOperator::SetScene(const Sphere *spheres, int sphere_count) {
+void CLOperator::SetScene(const Scene *scene) {
+  auto sphereVec = scene->GetSphereVec();
+  int sphere_count = sphereVec.size();
+  Sphere spheres[sphere_count];
+  for (int i = 0; i < sphere_count; i++) {
+    spheres[i] = sphereVec[i];
+  } 
+
   cl::Buffer cl_spheres =
       cl::Buffer(_context, CL_MEM_READ_ONLY, sphere_count * sizeof(Sphere));
 
