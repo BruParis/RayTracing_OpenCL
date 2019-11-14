@@ -12,7 +12,9 @@ cl_float3 operator+(const cl_float3 &lhs, const cl_float3 &rhs) {
   return result;
 };
 
-void cleanUp() { delete cpu_output; }
+void cleanUp() { 
+  delete cpu_output; 
+}
 
 inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; }
 
