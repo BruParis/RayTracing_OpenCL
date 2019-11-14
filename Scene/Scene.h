@@ -1,5 +1,5 @@
-#ifndef SCENE_HPP
-#define SCENE_HPP
+#ifndef SCENE_H
+#define SCENE_H
 
 #include "common_struct.h"
 #include <vector>

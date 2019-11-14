@@ -1,5 +1,5 @@
-#ifndef CL_OPERATOR_HPP
-#define CL_OPERATOR_HPP
+#ifndef CL_OPERATOR_H
+#define CL_OPERATOR_H
 
 #include "../Scene/common_struct.h"
 #include "../Scene/Scene.h"

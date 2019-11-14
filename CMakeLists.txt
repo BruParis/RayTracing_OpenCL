@@ -15,7 +15,27 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${ROOT_DIR}")
 message( "output: " ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 find_package( OpenCL REQUIRED )
-file(GLOB RayTracing_SOURCES *.cpp CLOperator/*.cpp Scene/*.cpp)
+find_package( Qt5 COMPONENTS Core Widgets REQUIRED )
 
+#################################
+# Qt
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+include_directories(${Qt5_INCLUDE_DIRS}
+                    ${Qt5Core_INCLUDE_DIRS}
+                    ${Qt5Widgets_INCLUDE_DIRS})
+
+set(QT_LIBRARIES ${Qt5_LIBRARIES}
+                 ${Qt5Core_LIBRARIES}
+                 ${Qt5Widgets_LIBRARIES})
+
+set(FORMS_SRC ImgWindow.ui)
+QT5_WRAP_UI(FORMS_HEADERS ${FORMS_SRC})
+#################################
+
+file(GLOB RayTracing_SOURCES *.cpp ImgWindow/*.cpp ImgWindow/*.ui CLOperator/*.cpp Scene/*.cpp)
 add_executable( RayTracing ${RayTracing_SOURCES} )
-target_link_libraries( RayTracing ${OpenCL_LIBRARIES} )
+
+target_link_libraries( RayTracing ${OpenCL_LIBRARIES} ${QT_LIBRARIES})
