@@ -18,17 +18,21 @@ public:
   ImgWindowWorker();
   ~ImgWindowWorker();
 
+  void copyImage(QPixmap &pixmap);
+
 private:
   void saveImage(int imgIdx);
   CLOperator* _clOperator;
   const Scene* _scene;
   Camera* _cam;
+  unsigned char * _pixelBuffer;
 
 private slots:
   void startProcess();
 
 signals:
   void finished();
+  void newImgSignal();
   void error(QString err);
 };
 #endif

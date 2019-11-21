@@ -1,4 +1,4 @@
-#include "ImgWindow.h"
+#include "ImgWindow/ImgWindow.h"
 
 int main(int argc, char *argv[]) {
 

@@ -1,4 +1,5 @@
 #include "ImgWindowWorker.h"
+#include "tbb/parallel_for.h"
 
 using namespace cl;
 
@@ -12,9 +13,7 @@ cl_float3 operator+(const cl_float3 &lhs, const cl_float3 &rhs) {
   return result;
 };
 
-void cleanUp() { 
-  delete cpu_output; 
-}
+void cleanUp() { delete cpu_output; }
 
 inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; }
 
@@ -42,12 +41,15 @@ ImgWindowWorker::ImgWindowWorker() {
   _cam->foyer = {0.0f, 50.0f, 90.0f};
   _cam->fov = 60.0f * PI / 180.0f;
   _clOperator->SetCamera(_cam);
+
+  _pixelBuffer = new unsigned char[imageW * imageH * 4];
 }
 
 ImgWindowWorker::~ImgWindowWorker() {
   delete _clOperator;
   delete _scene;
   delete _cam;
+  delete _pixelBuffer;
 }
 
 void ImgWindowWorker::startProcess() {
@@ -58,11 +60,11 @@ void ImgWindowWorker::startProcess() {
   for (int i = 0; i < 10; i++) {
     // launch the kernel
     _clOperator->LaunchKernel();
-    _clOperator->ReadOutput(cpu_output);
+    emit newImgSignal();
 
     // save image
-    saveImage(i);
-    std::cout << "Saved image" << std::endl;
+    // saveImage(i);
+    // std::cout << "Saved image" << std::endl;
 
     _cam->foyer = _cam->foyer + vec_displ;
     _clOperator->SetCamera(_cam);
@@ -72,6 +74,23 @@ void ImgWindowWorker::startProcess() {
   cleanUp();
   system("PAUSE");
   emit finished();
+}
+
+void ImgWindowWorker::copyImage(QPixmap &pixmap) {
+  std::cout << "WORKER - copy Image image" << std::endl;
+
+  _clOperator->ReadOutput(cpu_output);
+
+  tbb::parallel_for((unsigned int)0, (unsigned int)imageW * imageH,
+                    [&](unsigned int i) {
+                      _pixelBuffer[4 * i + 0] = toInt(cpu_output[i].s[0]);
+                      _pixelBuffer[4 * i + 1] = toInt(cpu_output[i].s[0]);
+                      _pixelBuffer[4 * i + 2] = toInt(cpu_output[i].s[0]);
+                      _pixelBuffer[4 * i + 3] = 255;
+                    });
+
+  QImage image(_pixelBuffer, imageW, imageH, QImage::Format::Format_RGBA8888);
+  pixmap.convertFromImage(image);
 }
 
 void ImgWindowWorker::saveImage(int imgIdx) {

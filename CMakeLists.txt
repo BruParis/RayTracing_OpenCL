@@ -8,7 +8,7 @@ project (RayTracing)
 set(CMAKE_BUILD_TYPE "Release")
 
 set (ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set (CMAKE_CXX_FLAGS "-std=c++11 -pthread -O3 -w -m64 -fno-omit-frame-pointer -fopenmp")
+set (CMAKE_CXX_FLAGS "-std=c++11 -pthread -ltbb -O3 -w -m64 -fno-omit-frame-pointer -fopenmp")
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${ROOT_DIR}/CMake/Modules/")
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${ROOT_DIR}")

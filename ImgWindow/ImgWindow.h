@@ -15,12 +15,16 @@ public:
   ~ImgWindow();
 
 private:
+  bool _newImg = false;
   QPixmap _image;
   Ui::ImgWindow *ui;
   ImgWindowWorker *_worker;
 
   void resizeEvent(QResizeEvent *e) override;
   void timerEvent(QTimerEvent *e) override;
+
+private slots:
+  void newImgSlot();
 };
 
 #endif
