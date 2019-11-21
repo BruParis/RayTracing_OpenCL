@@ -60,7 +60,7 @@ void ImgWindowWorker::startProcess() {
   for (int i = 0; i < 10; i++) {
     // launch the kernel
     _clOperator->LaunchKernel();
-    emit newImgSignal();
+    // emit newImgSignal();
 
     // save image
     // saveImage(i);
@@ -84,8 +84,8 @@ void ImgWindowWorker::copyImage(QPixmap &pixmap) {
   tbb::parallel_for((unsigned int)0, (unsigned int)imageW * imageH,
                     [&](unsigned int i) {
                       _pixelBuffer[4 * i + 0] = toInt(cpu_output[i].s[0]);
-                      _pixelBuffer[4 * i + 1] = toInt(cpu_output[i].s[0]);
-                      _pixelBuffer[4 * i + 2] = toInt(cpu_output[i].s[0]);
+                      _pixelBuffer[4 * i + 1] = toInt(cpu_output[i].s[1]);
+                      _pixelBuffer[4 * i + 2] = toInt(cpu_output[i].s[2]);
                       _pixelBuffer[4 * i + 3] = 255;
                     });
 

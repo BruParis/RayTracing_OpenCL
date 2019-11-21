@@ -36,12 +36,12 @@ void ImgWindow::resizeEvent(QResizeEvent *e) {
 void ImgWindow::timerEvent(QTimerEvent *e) {
   std::cout << "timer event\n";
   QMainWindow::timerEvent(e);
-  if (_newImg) {
+  // if (_newImg) {
     std::cout << "  ---> fetch new image\n";
     _worker->copyImage(_image);
     ui->imgView->setPixmap(_image);
     _newImg = false;
-  }
+  // }
 }
 
 void ImgWindow::newImgSlot() {
