@@ -17,5 +17,5 @@ make
 ```
 The image produced is ```image_raytracing.png```.
 
-![first](image_raytracing.png)
+![first](demo_brdf.png)
 

@@ -4,7 +4,7 @@ __constant float EPSILON_CALC = 0.001f;
 __constant int BRDF_NUM_RAYS = 5;
 __constant int USE_BRDF = 1;
 __constant int MAX_BOUNCES = 3;
-__constant int ANTI_ALIASING_SAMPLES = 6;
+__constant int ANTI_ALIASING_SAMPLES = 3;
 __constant int UINT16_MAX = 2 * 32767;
 
 typedef struct Ray {
