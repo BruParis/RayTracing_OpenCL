@@ -322,7 +322,8 @@ static float3 generate_ray(unsigned int i, unsigned int j, unsigned int *rand_se
 
 __kernel void render_kernel(__constant Sphere *spheres, const int sphere_count, 
                             const float3 foyer, const float fov, const int width,
-                            const int height, __global float3 *output) {
+                            const int height, unsigned int random_seed,
+                            __global float3 *output) {
 
   unsigned int work_item_id = get_global_id(0);
   unsigned int j = work_item_id % width; /* x-coordinate of the pixel */
@@ -332,7 +333,7 @@ __kernel void render_kernel(__constant Sphere *spheres, const int sphere_count,
 
   float3 finalcolor = (float3)(0.0f, 0.0f, 0.0f);
 
-  unsigned int random_seed = work_item_id;
+  random_seed += work_item_id;
   for (int spl = 0; spl < ANTI_ALIASING_SAMPLES; spl++) {
 
     /* ANTI-ALIASING -> Gaussian sampling around pixel */

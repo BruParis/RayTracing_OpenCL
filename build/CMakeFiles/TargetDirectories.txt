@@ -1,4 +1,0 @@
-/home/bruno/Repos/RayTracing/RayTracing_OpenCL/build/CMakeFiles/rebuild_cache.dir
-/home/bruno/Repos/RayTracing/RayTracing_OpenCL/build/CMakeFiles/RayTracing.dir
-/home/bruno/Repos/RayTracing/RayTracing_OpenCL/build/CMakeFiles/edit_cache.dir
-/home/bruno/Repos/RayTracing/RayTracing_OpenCL/build/CMakeFiles/RayTracing_autogen.dir

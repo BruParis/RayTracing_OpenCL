@@ -12,6 +12,7 @@ enum class KernelParam : unsigned int {
   CAM_FOV,
   IMAGE_WIDTH,
   IMAGE_HEIGHT,
+  RANDOM_SEED,
   BUFFER_OUTPUT
 };
 
@@ -28,6 +29,7 @@ public:
   void ReadOutput(void* data);
 
 private:
+  unsigned int _random_seed = 0;
   int _imageW, _imageH;
   cl::Buffer _cl_output;
   cl::Kernel _kernel;

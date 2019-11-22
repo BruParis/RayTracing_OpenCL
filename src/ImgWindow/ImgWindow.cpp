@@ -8,7 +8,8 @@ ImgWindow::ImgWindow(QWidget *parent)
   std::cout << "MAIN WINDOW STARTED\n";
 
   ui->setupUi(this);
-  // _viewSize = ui->imgView->size();
+  this->setStyleSheet("background-color: black;");
+  ui->imgView->setAlignment(Qt::AlignCenter);
 
   QThread *thread = new QThread;
   _worker = new ImgWindowWorker();

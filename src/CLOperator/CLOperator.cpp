@@ -200,6 +200,7 @@ void CLOperator::SetKernelParam(KernelParam paramIdx, const void *data, size_t s
 
 void CLOperator::LaunchKernel() {
   std::cout << "Rendering started..." << std::endl;
+  SetKernelParam(KernelParam::RANDOM_SEED, &_random_seed, sizeof(unsigned int));
 
   _queue.enqueueNDRangeKernel(_kernel, NULL, _global_work_size,
                               _local_work_size);
@@ -207,6 +208,9 @@ void CLOperator::LaunchKernel() {
 
   std::cout << "Rendering done! \nCopying output from device to host"
             << std::endl;
+
+  // Update random_seed
+  _random_seed = (unsigned char) rand();
 }
 
 void CLOperator::ReadOutput(void *data) {
