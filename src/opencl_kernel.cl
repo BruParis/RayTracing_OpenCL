@@ -84,27 +84,23 @@ bool intersect(Intersection* inter, const Sphere *sph, Ray *r) {
   return intersect_comp(inter, sph, r, -1.0f);
 }
 
-Intersection find_intersect(__constant Sphere *spheres, const int sphere_count, Ray *r) {
-  Intersection result;
+void find_intersect(Intersection* it, __constant Sphere *spheres, const int sphere_count, Ray *r) {
 
-  result.t = FLT_MAX;
-  result.objInter = -1;
-  result.hasIntersection = false;
+  it->t = FLT_MAX;
+  it->objInter = -1;
+  it->hasIntersection = false;
 
   for (int i = 0; i < sphere_count; i++) {
 
     Sphere sph = spheres[i];
-
     if (sph.R < 0.0f)
       continue;
 
-    bool interSuccess = intersect_comp(&result, &sph, r, result.t);
+    bool inter_success = intersect_comp(it, &sph, r, it->t);
 
-    if (interSuccess)
-      result.objInter = i;
+    if (inter_success)
+      it->objInter = i;
   }
-
-  return result;
 }
 
 float3 diffuse_and_shadow(const float3 pInter, const float3 normalInter, int idObj,
@@ -126,7 +122,8 @@ float3 diffuse_and_shadow(const float3 pInter, const float3 normalInter, int idO
     rShadow.origin = pInter + EPSILON_SPACE * normalInter;
     rShadow.dir = -lightDir;
 
-    Intersection itShadow = find_intersect(spheres, sphere_count, &rShadow);
+    Intersection itShadow;
+    find_intersect(&itShadow, spheres, sphere_count, &rShadow);
 
     if (itShadow.objInter < 0)
       continue;
@@ -231,11 +228,12 @@ float3 trace(__constant Sphere *spheres, const int sphere_count, Ray *r,
   float3 colBgr = (float3)(0.0f, 0.0f, 0.0f);
   float3 mask = (float3)(1.0f, 1.0f, 1.0f);
 
+  Intersection it;
   for (int bounce = 0; bounce < MAX_BOUNCES; bounce++) {
 
-    Intersection it = find_intersect(spheres, sphere_count, r);
-    int idObj = it.objInter;
+    find_intersect(&it, spheres, sphere_count, r);
 
+    int idObj = it.objInter;
     if (idObj < 0) /* inter id < 0 -> No intersections */
       return colBgr;
 
