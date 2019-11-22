@@ -15,7 +15,7 @@ cmake .
 make
 ./RayTracing
 ```
-The image produced is ```image_raytracing.png```.
+default gif demo ```demo_brdf.gif```.
 
-![first](demo_brdf.png)
+![first](demo_brdf.gif)
 
