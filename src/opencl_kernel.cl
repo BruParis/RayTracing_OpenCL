@@ -1,7 +1,7 @@
 __constant float PI = 3.14159f;
 __constant float EPSILON_SPACE = 0.01f;
 __constant float EPSILON_CALC = 0.001f;
-__constant int BRDF_NUM_RAYS = 3;
+__constant int BRDF_NUM_RAYS = 5;
 __constant int USE_BRDF = 1;
 __constant int MAX_BOUNCES = 3;
 __constant int ANTI_ALIASING_SAMPLES = 6;
@@ -217,8 +217,11 @@ float3 diffusive_over_brdf(float3 pointInter, float3 normalInter, int idObj,
     /*float cosTheta = dot(brdfDir,Norm);*/
     float3 light = diffuse_and_shadow(pointInter, brdfDir, idObj, 
                                       spheres, sphere_count);
-    result += light / BRDF_NUM_RAYS;
+    result += light;
   }
+
+  /* see raytracing document for PI factor */
+  result *= PI / BRDF_NUM_RAYS;
 
   return result;
 }
@@ -272,13 +275,14 @@ float3 trace(__constant Sphere *spheres, const int sphere_count, Ray *r,
                                 sphere_count);
 
     /* if weak or no light, no need to follow ray anymore */
-    if (lightReceived[0] < EPSILON_CALC && lightReceived[1] < EPSILON_CALC
+    /* if (lightReceived[0] < EPSILON_CALC && lightReceived[1] < EPSILON_CALC
         && lightReceived[2] < EPSILON_CALC)
-      break;
+      break; */
 
     mask *= (1.0f - spec) * lightReceived;
 
     colBgr += mask * diff;
+    break;
   }
 
   return colBgr;
