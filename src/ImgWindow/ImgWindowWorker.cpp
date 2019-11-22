@@ -17,8 +17,8 @@ void cleanUp() { delete cpu_output; }
 
 inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; }
 
-const int imageW = 240, imageH = 160;
-// const int imageW = 480, imageH = 320;
+// const int imageW = 240, imageH = 160;
+const int imageW = 480, imageH = 320;
 // const int imageW = 720, imageH = 480;
 // const int imageW = 1280, imageH = 720;
 // const int imageW = 1920, imageH = 1080;

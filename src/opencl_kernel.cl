@@ -1,10 +1,10 @@
 __constant float PI = 3.14159f;
 __constant float EPSILON_SPACE = 0.01f;
 __constant float EPSILON_CALC = 0.001f;
-__constant int BRDF_NUM_RAYS = 10;
+__constant int BRDF_NUM_RAYS = 3;
 __constant int USE_BRDF = 1;
 __constant int MAX_BOUNCES = 3;
-__constant int ANTI_ALIASING_SAMPLES = 4;
+__constant int ANTI_ALIASING_SAMPLES = 6;
 __constant int UINT16_MAX = 2 * 32767;
 
 typedef struct Ray {
@@ -46,9 +46,7 @@ float get_uniform(unsigned int *seed) {
   return result;
 }
 
-Intersection intersect(const Sphere *sph, Ray *r) {
-
-  Intersection result;
+bool intersect_comp(Intersection* inter, const Sphere *sph, Ray *r, float prevDist) {
 
   float3 centreToRay = r->origin - sph->Centre;
 
@@ -58,27 +56,32 @@ Intersection intersect(const Sphere *sph, Ray *r) {
   float discr = b * b - 4.0f * a * c;
 
   if (discr < 0.0f)
-    result.hasIntersection = false;
+    return false;
   else {
     float t1 = (-b - sqrt(discr)) / (2.0f * a);
     float t2 = (-b + sqrt(discr)) / (2.0f * a);
 
     if (t2 < 0.0f) /* two intersections behind the cam */
-      result.hasIntersection = false;
-    else {
-      result.hasIntersection = true;
+      return false;
 
-      if (t1 < 0.0f) /* one intersections ahead, one behind */
-        result.t = t2;
-      else
-        result.t = t1;
+     /* t1 < 0.0f one intersections ahead, one behind */
+    float t = t1 < 0.0f ? t2 : t1;
+    if (prevDist < 0.0f || t < prevDist) {
 
-      result.pInter = r->origin + (result.t * r->dir);
-      result.N = normalize(result.pInter - sph->Centre);
+      inter->hasIntersection = true;
+      inter->t = t;
+      inter->pInter = r->origin + (inter->t * r->dir);
+      inter->N = normalize(inter->pInter - sph->Centre);
+
+      return true;
     }
-  }
 
-  return result;
+    return false;
+  }
+}
+
+bool intersect(Intersection* inter, const Sphere *sph, Ray *r) {
+  return intersect_comp(inter, sph, r, -1.0f);
 }
 
 Intersection find_intersect(__constant Sphere *spheres, const int sphere_count, Ray *r) {
@@ -95,15 +98,10 @@ Intersection find_intersect(__constant Sphere *spheres, const int sphere_count, 
     if (sph.R < 0.0f)
       continue;
 
-    Intersection aux = intersect(&sph, r);
+    bool interSuccess = intersect_comp(&result, &sph, r, result.t);
 
-    if (aux.hasIntersection && (aux.t <= result.t)) {
-      result.t = aux.t;
+    if (interSuccess)
       result.objInter = i;
-      result.hasIntersection = true;
-      result.N = aux.N;
-      result.pInter = aux.pInter;
-    }
   }
 
   return result;
@@ -168,17 +166,18 @@ Ray *refraction(const Sphere *sph, Ray *r, const Intersection *it) {
   if (rootTerm > 0.0f) {
     r->origin = it->pInter - EPSILON_SPACE * normal;
     r->dir = (rappRef * r->dir) - (rappRef * compTan + sqrt(rootTerm)) * normal;
-    Intersection internalIt = intersect(sph, r); /* internal intersection */
-    normal = -internalIt.N;
+    intersect(it, sph, r); /* internal intersection */
+    normal = -it->N;
     rappRef = 1.0f / rappRef;
     compTan = dot(r->dir, normal);
 
     /* > 0 inside the sphere */
     float rootTerm = 1.0f - rappRef * rappRef * (1.0f - compTan * compTan);
-    r->origin = internalIt.pInter - EPSILON_SPACE * normal;
+    r->origin = it->pInter - EPSILON_SPACE * normal;
     r->dir = (rappRef * r->dir) - (rappRef * compTan + sqrt(rootTerm)) * normal;
-  } else /* total reflection */
-  {
+  } 
+  else { 
+    /* total reflection */
     r->origin = it->pInter + EPSILON_SPACE * normal;
     r->dir = r->dir - 2.0f * compTan * normal;
   }
