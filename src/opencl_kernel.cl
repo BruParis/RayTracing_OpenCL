@@ -125,16 +125,15 @@ float3 diffuse_and_shadow(const float3 pInter, const float3 normalInter, int idO
     Intersection itShadow;
     find_intersect(&itShadow, spheres, sphere_count, &rShadow);
 
-    if (itShadow.objInter < 0)
+    int idShadow = itShadow.objInter;
+    if (idShadow < 0)
       continue;
     
-    const Sphere sphShadow = spheres[itShadow.objInter];
     float shadowDist = itShadow.t * itShadow.t;
-
     bool objBeforeLight = shadowDist < lightDist; 
-    bool lighting = itShadow.objInter == i
+    bool lighting = idShadow == i
       || (L.R <= 0.0f && !objBeforeLight);
-    bool objShadowRefr = objBeforeLight && sphShadow.iRefr > 1.0f;
+    bool objShadowRefr = objBeforeLight && spheres[idShadow].iRefr > 1.0f;
 
     if (lighting || objShadowRefr) {
 
@@ -264,13 +263,11 @@ float3 trace(__constant Sphere *spheres, const int sphere_count, Ray *r,
       continue;
     }
 
-    float3 lightReceived;
-    if (USE_BRDF)
-      lightReceived = diffusive_over_brdf(pointInter, normalInter, idObj, spheres,
-                                          sphere_count, rand_seed);
-    else
-      lightReceived = diffuse_and_shadow(pointInter, normalInter, idObj, spheres,
-                                sphere_count);
+    float3 lightReceived = USE_BRDF ?
+                diffusive_over_brdf(pointInter, normalInter, idObj, spheres,
+                                    sphere_count, rand_seed) :
+                diffuse_and_shadow(pointInter, normalInter, idObj, spheres,
+                                      sphere_count);
 
     /* if weak or no light, no need to follow ray anymore */
     /* if (lightReceived[0] < EPSILON_CALC && lightReceived[1] < EPSILON_CALC
