@@ -17,9 +17,9 @@ void cleanUp() { delete cpu_output; }
 
 inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; }
 
-// const int imageW = 240, imageH = 160;
+const int imageW = 240, imageH = 160;
 // const int imageW = 480, imageH = 320;
-const int imageW = 720, imageH = 480;
+// const int imageW = 720, imageH = 480;
 // const int imageW = 1280, imageH = 720;
 // const int imageW = 1920, imageH = 1080;
 
@@ -27,7 +27,7 @@ inline int toInt(float x) { return int(clamp(x) * 255 + .5); }
 
 ImgWindowWorker::ImgWindowWorker() {
 
-  std::string kernel_path = "opencl_kernel.cl";
+  std::string kernel_path = "../src/opencl_kernel.cl";
   _clOperator = new CLOperator(kernel_path);
 
   // allocate memory on CPU for the image
@@ -56,10 +56,12 @@ void ImgWindowWorker::startProcess() {
 
   std::cout << "ImgWindowWorker START" << std::endl;
 
-  cl_float3 vec_displ = {0.0f, 0.0f, -5.0f};
-  for (int i = 0; i < 10; i++) {
+  cl_float3 vec_displ = {0.0f, -0.3f, -0.5f};
+  for (int i = 0; i < 100; i++) {
     // launch the kernel
+    std::cout << " NEW IMAGE START" << std::endl;
     _clOperator->LaunchKernel();
+    std::cout << " NEW IMAGE READY" << std::endl;
     // emit newImgSignal();
 
     // save image
@@ -77,9 +79,11 @@ void ImgWindowWorker::startProcess() {
 }
 
 void ImgWindowWorker::copyImage(QPixmap &pixmap) {
-  std::cout << "WORKER - copy Image image" << std::endl;
+  std::cout << "WORKER - copy Image" << std::endl;
 
   _clOperator->ReadOutput(cpu_output);
+
+  std::cout << "         copy Image -> read output done" << std::endl;
 
   tbb::parallel_for((unsigned int)0, (unsigned int)imageW * imageH,
                     [&](unsigned int i) {

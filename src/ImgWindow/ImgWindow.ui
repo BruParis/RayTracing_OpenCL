@@ -1,27 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>ImgWindow</class>
- <widget class="QMainWindow" name="Dialog">
+ <widget class="QMainWindow" name="ImgWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>480</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>ImgWindow</string>
   </property>
   <widget class="QLabel" name="imgView">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>14</y>
-     <width>381</width>
-     <height>271</height>
-    </rect>
-   </property>
    <property name="text">
     <string/>
    </property>

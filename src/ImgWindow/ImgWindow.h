@@ -19,6 +19,7 @@ private:
   QPixmap _image;
   Ui::ImgWindow *ui;
   ImgWindowWorker *_worker;
+  // QSize _viewSize;
 
   void resizeEvent(QResizeEvent *e) override;
   void timerEvent(QTimerEvent *e) override;
