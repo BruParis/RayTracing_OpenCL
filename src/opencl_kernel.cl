@@ -131,8 +131,7 @@ float3 diffuse_and_shadow(const float3 pInter, const float3 normalInter, int idO
     
     float shadowDist = itShadow.t * itShadow.t;
     bool objBeforeLight = shadowDist < lightDist; 
-    bool lighting = idShadow == i
-      || (L.R <= 0.0f && !objBeforeLight);
+    bool lighting = (idShadow == i) || (L.R <= 0.0f && !objBeforeLight);
     bool objShadowRefr = objBeforeLight && spheres[idShadow].iRefr > 1.0f;
 
     if (lighting || objShadowRefr) {

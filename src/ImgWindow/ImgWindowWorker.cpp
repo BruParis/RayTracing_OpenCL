@@ -64,10 +64,6 @@ void ImgWindowWorker::startProcess() {
     std::cout << " NEW IMAGE READY" << std::endl;
     // emit newImgSignal();
 
-    // save image
-    // saveImage(i);
-    // std::cout << "Saved image" << std::endl;
-
     _cam->foyer = _cam->foyer + vec_displ;
     _clOperator->SetCamera(_cam);
   }
@@ -82,7 +78,6 @@ void ImgWindowWorker::copyImage(QPixmap &pixmap) {
   std::cout << "WORKER - copy Image" << std::endl;
 
   _clOperator->ReadOutput(cpu_output);
-
   std::cout << "         copy Image -> read output done" << std::endl;
 
   tbb::parallel_for((unsigned int)0, (unsigned int)imageW * imageH,
@@ -95,18 +90,8 @@ void ImgWindowWorker::copyImage(QPixmap &pixmap) {
 
   QImage image(_pixelBuffer, imageW, imageH, QImage::Format::Format_RGBA8888);
   pixmap.convertFromImage(image);
-}
 
-void ImgWindowWorker::saveImage(int imgIdx) {
-  std::string fileName = "image_raytracing_" + std::to_string(imgIdx) + ".ppm";
-
-  // write image to PPM file, a very simple image file format
-  FILE *f = fopen(fileName.c_str(), "w");
-  fprintf(f, "P3\n%d %d\n%d\n", imageW, imageH, 255);
-
-  // loop over all pixels, write RGB values
-  for (int i = 0; i < imageW * imageH; i++) {
-    fprintf(f, "%d %d %d ", toInt(cpu_output[i].s[0]),
-            toInt(cpu_output[i].s[1]), toInt(cpu_output[i].s[2]));
-  }
+  std::string fileName = "image_raytracing_" + std::to_string(_imgIdx) + ".png";
+  image.save(fileName.c_str(), "PNG");
+  _imgIdx++;
 }

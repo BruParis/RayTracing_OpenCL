@@ -21,7 +21,7 @@ public:
   void copyImage(QPixmap &pixmap);
 
 private:
-  void saveImage(int imgIdx);
+  int _imgIdx = 0;
   CLOperator* _clOperator;
   const Scene* _scene;
   Camera* _cam;
