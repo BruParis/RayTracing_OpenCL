@@ -45,7 +45,7 @@ float get_uniform(unsigned int *seed) {
   return result;
 }
 
-bool intersect(Intersection* inter, const Sphere *sph, Ray *r, bool compareDist) {
+bool intersect(Intersection* inter, __constant Sphere *sph, Ray *r, bool compareDist) {
 
   float3 centreToRay = r->origin - sph->Centre;
 
@@ -85,11 +85,10 @@ void find_intersect(Intersection* it, __constant Sphere *spheres, const int sphe
 
   for (int i = 0; i < sphere_count; i++) {
 
-    Sphere sph = spheres[i];
-    if (sph.R < 0.0f)
+    if (spheres[i].R < 0.0f)
       continue;
 
-    bool inter_success = intersect(it, &sph, r, true);
+    bool inter_success = intersect(it, &spheres[i], r, true);
 
     if (inter_success)
       it->objInter = i;
@@ -145,7 +144,7 @@ float3 diffuse_and_shadow(const float3 pInter, const float3 normalInter, int idO
   return diffBgr;
 }
 
-Ray *refraction(const Sphere *sph, Ray *r, const Intersection *it) {
+Ray *refraction(__constant Sphere *sph, Ray *r, Intersection *it) {
   float3 normal = it->N;
   float rappRef = 1.0f / (sph->iRefr);
   float compTan = dot(r->dir, normal);
@@ -252,8 +251,7 @@ float3 trace(__constant Sphere *spheres, const int sphere_count, Ray *r,
     /* transparency -> refraction effect - counts as 1 bounce */
     if (spheres[idObj].iRefr >= 1.0f)
     {
-      Sphere refrSph = spheres[idObj]; 
-      r = refraction(&refrSph, r, &it);
+      r = refraction(&spheres[idObj], r, &it);
       continue;
     }
 
