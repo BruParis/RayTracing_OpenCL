@@ -2,10 +2,11 @@ __constant float PI = 3.14159f;
 __constant float EPSILON_SPACE = 0.01f;
 __constant float EPSILON_CALC = 0.001f;
 __constant int BRDF_NUM_RAYS = 8;
-__constant int USE_BRDF = 0;
+__constant int USE_BRDF = 1;
 __constant int MAX_BOUNCES = 3;
 __constant int ANTI_ALIASING_SAMPLES = 6;
 __constant int UINT16_MAX = 2 * 32767;
+__constant int MAX_CALL_RAY = 3;
 
 typedef struct Ray {
   float3 origin;
@@ -145,32 +146,33 @@ float3 diffuse_and_shadow(const float3 pInter, const float3 normalInter, int idO
   return diffBgr;
 }
 
-Ray *refraction(__constant Sphere *sph, Ray *r, Intersection *it) {
+Ray refraction(__constant Sphere *sph, Ray *r, Intersection *it) {
   float3 normal = it->N;
   float rappRef = 1.0f / (sph->iRefr);
   float compTan = dot(r->dir, normal);
   float rootTerm = 1.0f - rappRef * rappRef * (1.0f - compTan * compTan);
 
+  Ray r_refr = *r;
   if (rootTerm > 0.0f) {
-    r->origin = it->pInter - EPSILON_SPACE * normal;
-    r->dir = (rappRef * r->dir) - (rappRef * compTan + sqrt(rootTerm)) * normal;
-    intersect(it, sph, r, false); /* internal intersection */
+    r_refr.origin = it->pInter - EPSILON_SPACE * normal;
+    r_refr.dir = (rappRef * r_refr.dir) - (rappRef * compTan + sqrt(rootTerm)) * normal;
+    intersect(it, sph, &r_refr, false); /* internal intersection */
     normal = -it->N;
     rappRef = 1.0f / rappRef;
-    compTan = dot(r->dir, normal);
+    compTan = dot(r_refr.dir, normal);
 
     /* > 0 inside the sphere */
     float rootTerm = 1.0f - rappRef * rappRef * (1.0f - compTan * compTan);
-    r->origin = it->pInter - EPSILON_SPACE * normal;
-    r->dir = (rappRef * r->dir) - (rappRef * compTan + sqrt(rootTerm)) * normal;
+    r_refr.origin = it->pInter - EPSILON_SPACE * normal;
+    r_refr.dir = (rappRef * r_refr.dir) - (rappRef * compTan + sqrt(rootTerm)) * normal;
   } 
   else { 
     /* total reflection */
-    r->origin = it->pInter + EPSILON_SPACE * normal;
-    r->dir = r->dir - 2.0f * compTan * normal;
+    r_refr.origin = it->pInter + EPSILON_SPACE * normal;
+    r_refr.dir = r_refr.dir - 2.0f * compTan * normal;
   }
 
-  return r;
+  return r_refr;
 }
 
 float3 brdf_ray(float3 normal, unsigned int* rand_seed) {
@@ -217,64 +219,85 @@ float3 diffusive_over_brdf(float3 pointInter, float3 normalInter, int idObj,
 
 float3 trace(__constant Sphere *spheres, const int sphere_count, Ray *r,
              unsigned int* rand_seed) {
-  float3 colBgr = (float3)(0.0f, 0.0f, 0.0f);
-  float3 mask = (float3)(1.0f, 1.0f, 1.0f);
+  float3 gen_colBgr = (float3)(0.0f, 0.0f, 0.0f);
 
+  int call_count = 0;
   Intersection it;
-  for (int bounce = 0; bounce < MAX_BOUNCES; bounce++) {
+  Ray next_ray;
+  bool newRay = false;
 
-    find_intersect(&it, spheres, sphere_count, r);
+  while (call_count < MAX_CALL_RAY) {
 
-    int idObj = it.objInter;
-    if (idObj < 0) /* inter id < 0 -> No intersections */
-      return colBgr;
+    float3 colBgr = (float3)(0.0f, 0.0f, 0.0f);
+    float3 mask = (float3)(1.0f, 1.0f, 1.0f);
 
-    float light = spheres[idObj].light;
-    float3 diff = spheres[idObj].diff;
+    if (newRay) {
+      *r = next_ray;
+      newRay = false;
+    }
+    else if (call_count > 0)
+      break;
 
-    if (light > 0.0f) /* Case when object is primary light source */
-    {
+    call_count++;
+    for (int bounce = 0; bounce < MAX_BOUNCES; bounce++) {
+
+      find_intersect(&it, spheres, sphere_count, r);
+
+      int idObj = it.objInter;
+      if (idObj < 0) /* inter id < 0 -> No intersections */
+        break;
+
+      float light = spheres[idObj].light;
+      float3 diff = spheres[idObj].diff;
+
+      if (light > 0.0f) /* Case when object is primary light source */
+      {
+        colBgr += mask * diff;
+        break;
+      }
+
+      float3 pointInter = it.pInter;
+      float3 normalInter = it.N;
+      float spec = spheres[idObj].spec;
+
+      /* transparency -> refraction effect - counts as 1 bounce */
+      if (spheres[idObj].iRefr >= 1.0f)
+      {
+        next_ray = refraction(&spheres[idObj], r, &it);
+        newRay = true;
+        /* *r = r_refr; */
+        /* continue; */
+      }
+
+      /* reflexive material -> new ray from bounce on intersection */
+      if (spec > 0.0f) {
+        r->dir = r->dir - 2.0f * dot(r->dir, normalInter) * normalInter;
+        r->origin = pointInter + EPSILON_SPACE * normalInter;
+        mask *= spec * diff;
+        continue;
+      }
+
+      float3 lightReceived = USE_BRDF ?
+                  diffusive_over_brdf(pointInter, normalInter, idObj, spheres,
+                                      sphere_count, rand_seed) :
+                  diffuse_and_shadow(pointInter, normalInter, idObj, spheres,
+                                        sphere_count);
+
+      /* if weak or no light, no need to follow ray anymore */
+      /* if (lightReceived[0] < EPSILON_CALC && lightReceived[1] < EPSILON_CALC
+          && lightReceived[2] < EPSILON_CALC)
+        break; */
+
+      mask *= (1.0f - spec) * lightReceived;
+
       colBgr += mask * diff;
-      return colBgr;
+      break;
     }
 
-    float3 pointInter = it.pInter;
-    float3 normalInter = it.N;
-    float spec = spheres[idObj].spec;
-
-    /* reflexive material -> new ray from bounce on intersection */
-    if (spec > 0.0f) {
-      r->dir = r->dir - 2.0f * dot(r->dir, normalInter) * normalInter;
-      r->origin = pointInter + EPSILON_SPACE * normalInter;
-      mask *= spec * diff;
-      continue;
-    }
-
-    /* transparency -> refraction effect - counts as 1 bounce */
-    if (spheres[idObj].iRefr >= 1.0f)
-    {
-      r = refraction(&spheres[idObj], r, &it);
-      continue;
-    }
-
-    float3 lightReceived = USE_BRDF ?
-                diffusive_over_brdf(pointInter, normalInter, idObj, spheres,
-                                    sphere_count, rand_seed) :
-                diffuse_and_shadow(pointInter, normalInter, idObj, spheres,
-                                      sphere_count);
-
-    /* if weak or no light, no need to follow ray anymore */
-    /* if (lightReceived[0] < EPSILON_CALC && lightReceived[1] < EPSILON_CALC
-        && lightReceived[2] < EPSILON_CALC)
-      break; */
-
-    mask *= (1.0f - spec) * lightReceived;
-
-    colBgr += mask * diff;
-    break;
+    gen_colBgr += colBgr;
   }
 
-  return colBgr;
+  return gen_colBgr;
 }
 
 static float3 generate_ray(unsigned int i, unsigned int j, unsigned int *rand_seed,

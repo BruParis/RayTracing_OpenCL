@@ -37,7 +37,7 @@ Scene::Scene() {
   sph.Centre = {-29.0f, 40.0f, 5.0f};
   sph.R = 20.0f;
   sph.diff = {1.0f, 1.0f, 1.0f};
-  sph.spec = 0.0f;
+  sph.spec = 0.1f;
   sph.iRefr = 1.2f;
   sph.light = -1.0f;
   _spheres.push_back(sph);
