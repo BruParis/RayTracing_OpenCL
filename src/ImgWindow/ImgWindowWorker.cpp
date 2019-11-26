@@ -91,7 +91,7 @@ void ImgWindowWorker::copyImage(QPixmap &pixmap) {
   QImage image(_pixelBuffer, imageW, imageH, QImage::Format::Format_RGBA8888);
   pixmap.convertFromImage(image);
 
-  std::string fileName = "image_raytracing_" + std::to_string(_imgIdx) + ".png";
-  image.save(fileName.c_str(), "PNG");
+  // std::string fileName = "image_raytracing_" + std::to_string(_imgIdx) + ".png";
+  // image.save(fileName.c_str(), "PNG");
   _imgIdx++;
 }

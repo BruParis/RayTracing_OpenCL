@@ -2,7 +2,7 @@ __constant float PI = 3.14159f;
 __constant float EPSILON_SPACE = 0.01f;
 __constant float EPSILON_CALC = 0.001f;
 __constant int BRDF_NUM_RAYS = 8;
-__constant int USE_BRDF = 1;
+__constant int USE_BRDF = 0;
 __constant int MAX_BOUNCES = 3;
 __constant int ANTI_ALIASING_SAMPLES = 6;
 __constant int UINT16_MAX = 2 * 32767;
@@ -57,8 +57,9 @@ bool intersect(Intersection* inter, __constant Sphere *sph, Ray *r, bool compare
   if (discr < 0.0f)
     return false;
   else {
-    float t1 = (-b - sqrt(discr)) / (2.0f * a);
-    float t2 = (-b + sqrt(discr)) / (2.0f * a);
+    float sqrt_discr = sqrt(discr);
+    float t1 = (-b - sqrt_discr) / (2.0f * a);
+    float t2 = (-b + sqrt_discr) / (2.0f * a);
 
     if (t2 < 0.0f) /* two intersections behind the cam */
       return false;
@@ -178,8 +179,9 @@ float3 brdf_ray(float3 normal, unsigned int* rand_seed) {
 
   /*new random direction for indirect -diffusive- light, 
     relative to BRDF distrib, in local coord. system*/
-  float3 localDir = (float3)(cos(2 * PI * r1) * sqrt(1 - r2),
-                             cos(2 * PI * r1) * sqrt(1 - r2), sqrt(r2));
+  float sqrt_1_r2 = sqrt(1 - r2);
+  float3 localDir = (float3)(cos(2 * PI * r1) * sqrt_1_r2,
+                             cos(2 * PI * r1) * sqrt_1_r2, sqrt(r2));
 
   /* convert into global coordinate, with normal as one of its axes*/
   float3 randomvec = (float3)(get_uniform(rand_seed),
