@@ -6,5 +6,9 @@ int main(int argc, char *argv[]) {
   ImgWindow *widget = new ImgWindow();
 
   widget->show();
-  return app.exec();
+  int ret = app.exec();
+
+  delete widget;
+
+  return ret;
 }

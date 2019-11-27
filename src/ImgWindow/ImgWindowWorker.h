@@ -31,7 +31,7 @@ private slots:
   void startProcess();
 
 signals:
-  void finished();
+  void finishedSignal();
   void newImgSignal();
   void error(QString err);
 };

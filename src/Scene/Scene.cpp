@@ -7,7 +7,7 @@ Scene::Scene() {
 
   // reflecting sphere
   Sphere sph;
-  sph.Centre = {20.0f, 65.0f, -10.0f};
+  sph.Centre = {40.0f, -5.0f, -40.0f};
   sph.R = 25.0f;
   sph.diff = {1.0f, 1.0f, 1.0f};
   sph.spec = 0.85f;
@@ -16,7 +16,7 @@ Scene::Scene() {
   _spheres.push_back(sph);
 
   // purple opaque sphere
-  sph.Centre = {40.0f, -5.0f, -40.0f};
+  sph.Centre = {20.0f, 65.0f, -10.0f};
   sph.R = 25.0f;
   sph.diff = {1.0f, 0.0f, 0.7f};
   sph.spec = 0.0f;

@@ -15,6 +15,7 @@ public:
   ~ImgWindow();
 
 private:
+  bool _finished = false;
   bool _newImg = false;
   QPixmap _image;
   Ui::ImgWindow *ui;
@@ -26,6 +27,7 @@ private:
 
 private slots:
   void newImgSlot();
+  void finishedSlot();
 };
 
 #endif

@@ -19,6 +19,7 @@ ImgWindow::ImgWindow(QWidget *parent)
 
   connect(thread, SIGNAL(started()), _worker, SLOT(startProcess()));
   connect(_worker, SIGNAL(newImgSignal()), this, SLOT(newImgSlot()));
+  connect(_worker, SIGNAL(finishedSignal()), this, SLOT(finishedSlot()));
 
   thread->start();
 }
@@ -38,15 +39,21 @@ void ImgWindow::resizeEvent(QResizeEvent *e) {
 void ImgWindow::timerEvent(QTimerEvent *e) {
   std::cout << "timer event\n";
   QMainWindow::timerEvent(e);
-  // if (_newImg) {
+  if (!_finished) {
     std::cout << "  ---> fetch new image\n";
     _worker->copyImage(_image);
     ui->imgView->setPixmap(_image);
     _newImg = false;
-  // }
+  }
 }
 
 void ImgWindow::newImgSlot() {
   std::cout << "NEW IMAGE SLOT\n";
   _newImg = true;
+}
+
+void ImgWindow::finishedSlot() {
+  std::cout << "FINISHED SLOT\n";
+  _finished = true;
+  QCoreApplication::quit();
 }

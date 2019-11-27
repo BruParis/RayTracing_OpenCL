@@ -46,6 +46,7 @@ ImgWindowWorker::ImgWindowWorker() {
 }
 
 ImgWindowWorker::~ImgWindowWorker() {
+  cleanUp();
   delete _clOperator;
   delete _scene;
   delete _cam;
@@ -57,7 +58,7 @@ void ImgWindowWorker::startProcess() {
   std::cout << "ImgWindowWorker START" << std::endl;
 
   cl_float3 vec_displ = {0.0f, -0.3f, -0.5f};
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 10; i++) {
     // launch the kernel
     std::cout << " NEW IMAGE START" << std::endl;
     _clOperator->LaunchKernel();
@@ -69,9 +70,9 @@ void ImgWindowWorker::startProcess() {
   }
 
   // release memory
-  cleanUp();
+  // cleanUp();
   system("PAUSE");
-  emit finished();
+  emit finishedSignal();
 }
 
 void ImgWindowWorker::copyImage(QPixmap &pixmap) {
