@@ -210,7 +210,7 @@ float3 diffused_light_brdf(float3 pointInter, float3 normalInter, int idObj,
   r_brdf.origin = pointInter + EPSILON_SPACE * normalInter;
   Intersection it_brdf;
   for (int i = 0; i < BRDF_NUM_RAYS; i++) {
-    /*float cosTheta = dot(r_brdf.dir, normalInter);*/
+
     brdf_ray(&r_brdf, normalInter, rand_seed);
     find_intersect(&it_brdf, spheres, sphere_count, &r_brdf);
 
@@ -234,6 +234,7 @@ float3 diffused_light_brdf(float3 pointInter, float3 normalInter, int idObj,
       result += light_intensity * spheres[idObj].diff * brdfObj.diff;
     }
     else {
+      /* float cosTheta = dot(r_brdf.dir, normalInter); */
       float3 brdf_mask = diffused_light_and_shadow(pInter_brdf, normal_brdf, idObj_Brdf,
                         spheres, sphere_count);
       result += (1.0f - spheres[idObj].spec) * brdf_mask * spheres[idObj].diff;

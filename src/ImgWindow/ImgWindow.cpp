@@ -11,8 +11,14 @@ ImgWindow::ImgWindow(QWidget *parent)
   this->setStyleSheet("background-color: black;");
   ui->imgView->setAlignment(Qt::AlignCenter);
 
+  // const int imageW = 240, imageH = 160;
+  // const int imageW = 480, imageH = 320;
+  // const int imageW = 720, imageH = 480;
+  const int imageW = 1280, imageH = 720;
+  // const int imageW = 1920, imageH = 1080;
+
   QThread *thread = new QThread;
-  _worker = new ImgWindowWorker();
+  _worker = new ImgWindowWorker(imageW, imageH);
   _worker->moveToThread(thread);
 
   startTimer(1000 / 30);

@@ -42,7 +42,7 @@ CLOperator::CLOperator(std::string kernel_path) {
   // Create an OpenCL program by performing runtime source compilation for the
   // chosen device
   cl::Program program = cl::Program(_context, kernel_source);
-  cl_int result = program.build({_device});
+  cl_int result = program.build({_device}, "-I ../src/opencl/");
 
   if (result)
     std::cout << "Error during compilation OpenCL code !!!\n(" << result << ") "

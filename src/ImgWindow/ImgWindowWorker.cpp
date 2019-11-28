@@ -1,38 +1,15 @@
 #include "ImgWindowWorker.h"
 #include "tbb/parallel_for.h"
 
-using namespace cl;
+ImgWindowWorker::ImgWindowWorker(int imageW, int imageH)
+    : _imageW(imageW), _imageH(imageH) {
 
-cl_float4 *cpu_output;
-
-cl_float3 operator+(const cl_float3 &lhs, const cl_float3 &rhs) {
-  cl_float3 result;
-  for (uint i = 0; i < 3; ++i) {
-    result.s[i] = lhs.s[i] + rhs.s[i];
-  }
-  return result;
-};
-
-void cleanUp() { delete cpu_output; }
-
-inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; }
-
-// const int imageW = 240, imageH = 160;
-// const int imageW = 480, imageH = 320;
-// const int imageW = 720, imageH = 480;
-const int imageW = 1280, imageH = 720;
-// const int imageW = 1920, imageH = 1080;
-
-inline int toInt(float x) { return int(clamp(x) * 255 + .5); }
-
-ImgWindowWorker::ImgWindowWorker() {
-
-  std::string kernel_path = "../src/opencl_kernel.cl";
+  std::string kernel_path = "../src/opencl/opencl_kernel.cl";
   _clOperator = new CLOperator(kernel_path);
 
   // allocate memory on CPU for the image
   _clOperator->SetBufferOutput(imageW, imageH);
-  cpu_output = new cl_float3[imageW * imageH];
+  _cpu_output = new cl_float3[imageW * imageH];
 
   _scene = new Scene();
   _clOperator->SetScene(_scene);
@@ -46,7 +23,7 @@ ImgWindowWorker::ImgWindowWorker() {
 }
 
 ImgWindowWorker::~ImgWindowWorker() {
-  cleanUp();
+  delete _cpu_output;
   delete _clOperator;
   delete _scene;
   delete _cam;
@@ -78,23 +55,25 @@ void ImgWindowWorker::startProcess() {
 void ImgWindowWorker::copyImage(QPixmap &pixmap) {
   std::cout << "WORKER - copy Image" << std::endl;
 
-  _clOperator->ReadOutput(cpu_output);
+  _clOperator->ReadOutput(_cpu_output);
   std::cout << "         copy Image -> read output done" << std::endl;
 
-  tbb::parallel_for((unsigned int)0, (unsigned int)imageW * imageH,
+  tbb::parallel_for((unsigned int)0, (unsigned int)_imageW * _imageH,
                     [&](unsigned int i) {
-                      _pixelBuffer[4 * i + 0] = toInt(cpu_output[i].s[0]);
-                      _pixelBuffer[4 * i + 1] = toInt(cpu_output[i].s[1]);
-                      _pixelBuffer[4 * i + 2] = toInt(cpu_output[i].s[2]);
+                      _pixelBuffer[4 * i + 0] = toInt(_cpu_output[i].s[0]);
+                      _pixelBuffer[4 * i + 1] = toInt(_cpu_output[i].s[1]);
+                      _pixelBuffer[4 * i + 2] = toInt(_cpu_output[i].s[2]);
                       _pixelBuffer[4 * i + 3] = 255;
                     });
 
-  QImage image(_pixelBuffer, imageW, imageH, QImage::Format::Format_RGBA8888);
+  QImage image(_pixelBuffer, _imageW, _imageH, QImage::Format::Format_RGBA8888);
   pixmap.convertFromImage(image);
 
   if (_imgIdx < 1) {
-    std::string fileName = "image_raytracing_" + std::to_string(_imgIdx) + ".png";
+    std::string fileName =
+        "image_raytracing_" + std::to_string(_imgIdx) + ".png";
     image.save(fileName.c_str(), "PNG");
   }
+
   _imgIdx++;
 }

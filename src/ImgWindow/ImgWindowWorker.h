@@ -15,17 +15,21 @@
 class ImgWindowWorker : public QObject {
   Q_OBJECT
 public:
-  ImgWindowWorker();
+  ImgWindowWorker(int imageW, int imageH);
   ~ImgWindowWorker();
 
   void copyImage(QPixmap &pixmap);
 
 private:
+  int _imageW;
+  int _imageH;
   int _imgIdx = 0;
-  CLOperator* _clOperator;
-  const Scene* _scene;
-  Camera* _cam;
+  cl_float4 * _cpu_output;
   unsigned char * _pixelBuffer;
+
+  Camera* _cam;
+  const Scene* _scene;
+  CLOperator* _clOperator;
 
 private slots:
   void startProcess();
