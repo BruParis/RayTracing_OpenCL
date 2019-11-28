@@ -7,7 +7,7 @@ Scene::Scene() {
 
   // reflecting sphere
   Sphere sph;
-  sph.Centre = {40.0f, -5.0f, -40.0f};
+  sph.Centre = {20.0f, 65.0f, -10.0f};
   sph.R = 25.0f;
   sph.diff = {1.0f, 1.0f, 1.0f};
   sph.spec = 0.85f;
@@ -16,7 +16,7 @@ Scene::Scene() {
   _spheres.push_back(sph);
 
   // purple opaque sphere
-  sph.Centre = {20.0f, 65.0f, -10.0f};
+  sph.Centre = {40.0f, -5.0f, -40.0f};
   sph.R = 25.0f;
   sph.diff = {1.0f, 0.0f, 0.7f};
   sph.spec = 0.0f;
@@ -25,17 +25,17 @@ Scene::Scene() {
   _spheres.push_back(sph);
 
   // white sphere primary light source
-  sph.Centre = {-25.0f, 25.0f, -30.0f};
+  sph.Centre = {-30.0f, 25.0f, -30.0f};
   sph.R = 13.0f;
   sph.diff = {1.0f, 1.0f, 1.0f};
   sph.spec = 0.0f;
   sph.iRefr = 0.0f;
-  sph.light = 400.0f;
+  sph.light = 300.0f;
   _spheres.push_back(sph);
 
   // transparent ball
   sph.Centre = {-29.0f, 40.0f, 5.0f};
-  sph.R = 20.0f;
+  sph.R = 15.0f;
   sph.diff = {1.0f, 1.0f, 1.0f};
   sph.spec = 0.1f;
   sph.iRefr = 1.2f;
@@ -43,13 +43,13 @@ Scene::Scene() {
   _spheres.push_back(sph);
 
   // orange primary light source
-  sph.Centre = {-35.0f, -35.0f, -35.0f};
+  /*sph.Centre = {-35.0f, -35.0f, -35.0f};
   sph.R = -1.0f;
   sph.diff = {1.0f, 0.3f, 0.0f};
   sph.spec = 0.0f;
   sph.iRefr = 0.0f;
-  sph.light = 600.0f;
-  _spheres.push_back(sph);
+  sph.light = 200.0f;
+  _spheres.push_back(sph);*/
 
   // Wall down
   sph.Centre = {0.0f, 2000.0f, 0.0f};

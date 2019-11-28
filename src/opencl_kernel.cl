@@ -1,10 +1,10 @@
 __constant float PI = 3.14159f;
 __constant float EPSILON_SPACE = 0.01f;
 __constant float EPSILON_CALC = 0.001f;
-__constant int BRDF_NUM_RAYS = 8;
+__constant int BRDF_NUM_RAYS = 6;
 __constant int USE_BRDF = 1;
 __constant int MAX_BOUNCES = 3;
-__constant int ANTI_ALIASING_SAMPLES = 6;
+__constant int ANTI_ALIASING_SAMPLES = 3;
 __constant int UINT16_MAX = 2 * 32767;
 __constant int MAX_CALL_RAY = 3;
 
@@ -209,9 +209,8 @@ float3 diffused_light_brdf(float3 pointInter, float3 normalInter, int idObj,
   Ray r_brdf;
   r_brdf.origin = pointInter + EPSILON_SPACE * normalInter;
   Intersection it_brdf;
-  int count = 0;
   for (int i = 0; i < BRDF_NUM_RAYS; i++) {
-    float cosTheta = dot(r_brdf.dir, normalInter);
+    /*float cosTheta = dot(r_brdf.dir, normalInter);*/
     brdf_ray(&r_brdf, normalInter, rand_seed);
     find_intersect(&it_brdf, spheres, sphere_count, &r_brdf);
 
@@ -224,11 +223,12 @@ float3 diffused_light_brdf(float3 pointInter, float3 normalInter, int idObj,
     float light_brdf = brdfObj.light;
     float3 pInter_brdf = it_brdf.pInter;
     float3 normal_brdf = it_brdf.N;
-    float3 brdf_ObjDir = pointInter - brdfObj.Centre;
-    float brdfObj_Dist_2 = dot(brdf_ObjDir, brdf_ObjDir)- max(brdfObj.R * brdfObj.R, 0.0f);
-    brdf_ObjDir = normalize(brdf_ObjDir);
 
     if (light_brdf > 0.0f) {
+      float3 brdf_ObjDir = pointInter - brdfObj.Centre;
+      float brdfObj_Dist_2 = dot(brdf_ObjDir, brdf_ObjDir)- max(brdfObj.R * brdfObj.R, 0.0f);
+      brdf_ObjDir = normalize(brdf_ObjDir);
+
       float light_intensity = max(0.0f, light_brdf * (0.5f / (2.0f * PI)) *
                                  dot(normalInter, -brdf_ObjDir) / sqrt(brdfObj_Dist_2));
       result += light_intensity * spheres[idObj].diff * brdfObj.diff;
@@ -236,10 +236,8 @@ float3 diffused_light_brdf(float3 pointInter, float3 normalInter, int idObj,
     else {
       float3 brdf_mask = diffused_light_and_shadow(pInter_brdf, normal_brdf, idObj_Brdf,
                         spheres, sphere_count);
-      result += brdf_mask * spheres[idObj].diff;
+      result += (1.0f - spheres[idObj].spec) * brdf_mask * spheres[idObj].diff;
     }
-
-    result *= cosTheta;
   }
 
   result *= PI / BRDF_NUM_RAYS;

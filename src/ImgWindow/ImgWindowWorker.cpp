@@ -58,7 +58,7 @@ void ImgWindowWorker::startProcess() {
   std::cout << "ImgWindowWorker START" << std::endl;
 
   cl_float3 vec_displ = {0.0f, -0.3f, -0.5f};
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 100; i++) {
     // launch the kernel
     std::cout << " NEW IMAGE START" << std::endl;
     _clOperator->LaunchKernel();
@@ -92,7 +92,9 @@ void ImgWindowWorker::copyImage(QPixmap &pixmap) {
   QImage image(_pixelBuffer, imageW, imageH, QImage::Format::Format_RGBA8888);
   pixmap.convertFromImage(image);
 
-  // std::string fileName = "image_raytracing_" + std::to_string(_imgIdx) + ".png";
-  // image.save(fileName.c_str(), "PNG");
+  if (_imgIdx < 1) {
+    std::string fileName = "image_raytracing_" + std::to_string(_imgIdx) + ".png";
+    image.save(fileName.c_str(), "PNG");
+  }
   _imgIdx++;
 }
