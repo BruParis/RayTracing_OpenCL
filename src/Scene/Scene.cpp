@@ -30,7 +30,7 @@ Scene::Scene() {
   sph.diff = {1.0f, 1.0f, 1.0f};
   sph.spec = 0.0f;
   sph.iRefr = 0.0f;
-  sph.light = 6000.0f;
+  sph.light = 400.0f;
   _spheres.push_back(sph);
 
   // transparent ball
@@ -48,7 +48,7 @@ Scene::Scene() {
   sph.diff = {1.0f, 0.3f, 0.0f};
   sph.spec = 0.0f;
   sph.iRefr = 0.0f;
-  sph.light = 60000.0f;
+  sph.light = 600.0f;
   _spheres.push_back(sph);
 
   // Wall down
